@@ -1,1 +1,1 @@
-# mpm_water_ice_phase_change
+## Material Point Method for Two-Way Simulation of Water and Ice with Phase Change
