@@ -1,6 +1,7 @@
 from _common.configurations import Configuration
 from _common.samplers import BasePoissonDiskSampler
 from _common.solvers import BaseSolver
+from _common.constants import State
 
 from abc import abstractmethod
 from datetime import datetime
@@ -104,6 +105,11 @@ class BaseSimulation:
         """
         Reset the simulation.
         """
+        self.solver.state_p.fill(State.Hidden)
+        self.solver.position_p.fill([42, 42])
+        self.solver.n_particles[None] = 0
+        self.current_frame = 0
+
         # We copy this, so we can pop from this list and check the length:
         self.subsequent_geometries = self.configuration.subsequent_geometries.copy()
 
