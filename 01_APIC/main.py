@@ -8,7 +8,6 @@ from _common.samplers import BasePoissonDiskSampler
 
 from parsing import arguments, should_use_cuda_backend, should_use_collocated
 from presets import configuration_list
-from sampler import PoissonDiskSampler
 from apic import APIC
 
 import taichi as ti
