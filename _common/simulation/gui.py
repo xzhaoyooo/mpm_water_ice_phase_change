@@ -13,11 +13,12 @@ import taichi as ti
 class GUI_Simulation(BaseSimulation):
     def __init__(
         self,
-        name: str,
-        res: int,
-        solver: BaseSolver,
         configurations: list[Configuration],
         sampler: BasePoissonDiskSampler,
+        solver: BaseSolver,
+        prefix: str,
+        name: str,
+        res: int,
         initial_configuration: int = 0,
     ) -> None:
         """Constructs a  GUI renderer, this advances the MLS-MPM solver and renders the updated particle positions.
@@ -31,8 +32,10 @@ class GUI_Simulation(BaseSimulation):
         super().__init__(
             initial_configuration=initial_configuration,
             configurations=configurations,
+            prefix=prefix,
             sampler=sampler,
             solver=solver,
+            name=name,
         )
 
         # GUI.

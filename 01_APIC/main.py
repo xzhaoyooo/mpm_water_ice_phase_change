@@ -18,7 +18,8 @@ def main():
     ti.init(arch=ti.cuda if should_use_cuda_backend else ti.cpu, debug=True)
 
     initial_configuration = arguments.configuration % len(configuration_list)
-    simulation_name = f"Affine Particle-In-Cell Method"
+    name = f"Affine Particle-In-Cell Method"
+    prefix = f"APIC"
 
     # The radius for the particles and the Poisson-Disk Sampler:
     # TODO: this could be computed from radius, this should just be n_pc * n_grid^2?!
@@ -36,14 +37,15 @@ def main():
         configurations=configuration_list,
         sampler=sampler,
         solver=solver,
-        name=simulation_name,
+        prefix=prefix,
         res=(720, 720),
         radius=radius,
+        name=name,
     )
     simulation.run()
 
     print("\n", "#" * 100, sep="")
-    print("###", simulation_name)
+    print("###", name)
     print("#" * 100)
     print(">>> R        -> [R]eset the simulation.")
     print(">>> P|SPACE  -> [P]ause/Un[P]ause the simulation.")

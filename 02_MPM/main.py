@@ -30,16 +30,18 @@ def main():
     mpm_solver = MPM(max_particles, n_grid, dt)
     poisson_disk_sampler = BasePoissonDiskSampler(solver=mpm_solver, r=0.002, k=30)
 
-    simulation_name = "Material Point Method for Snow Simulation"
+    name = "Material Point Method for Snow Simulation"
+    prefix = "MPM"
     initial_configuration = arguments.configuration % len(configuration_list)
     if arguments.gui.lower() == "ggui":
         renderer = GGUI_Simulation(
             initial_configuration=initial_configuration,
             sampler=poisson_disk_sampler,
             configurations=configuration_list,
-            name=simulation_name,
             solver=mpm_solver,
             res=(720, 720),
+            prefix=prefix,
+            name=name,
         )
         renderer.run()
     # elif arguments.gui.lower() == "gui":
@@ -54,7 +56,7 @@ def main():
     #     renderer.run()
 
     print("\n", "#" * 100, sep="")
-    print("###", simulation_name)
+    print("###", name)
     print("#" * 100)
     print(">>> R        -> [R]eset the simulation.")
     print(">>> P|SPACE  -> [P]ause/Un[P]ause the simulation.")

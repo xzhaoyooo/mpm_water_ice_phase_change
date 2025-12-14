@@ -25,31 +25,34 @@ def main():
     solver = AugmentedMPM(quality=arguments.quality, max_particles=100_000)
     poisson_disk_sampler = BasePoissonDiskSampler(solver=solver, r=0.002, k=30)
 
-    simulation_name = "Augmented MPM, Water and Ice with Phase Change"
+    name = "Augmented MPM, Water and Ice with Phase Change"
+    prefix = "A_MPM"
     initial_configuration = arguments.configuration % len(configuration_list)
     if arguments.gui.lower() == "ggui":
         renderer = GGUI_Simulation(
             initial_configuration=initial_configuration,
-            sampler=poisson_disk_sampler,
             configurations=configuration_list,
-            name=simulation_name,
-            solver=solver,
+            sampler=poisson_disk_sampler,
             res=(720, 720),
+            prefix=prefix,
+            solver=solver,
+            name=name,
         )
         renderer.run()
     elif arguments.gui.lower() == "gui":
         renderer = GUI_Simulation(
             initial_configuration=initial_configuration,
-            sampler=poisson_disk_sampler,
             configurations=configuration_list,
-            name=simulation_name,
+            sampler=poisson_disk_sampler,
+            prefix=prefix,
             solver=solver,
+            name=name,
             res=720,
         )
         renderer.run()
 
     print("\n", "#" * 100, sep="")
-    print("###", simulation_name)
+    print("###", name)
     print("#" * 100)
     print(">>> R        -> [R]eset the simulation.")
     print(">>> P|SPACE  -> [P]ause/Un[P]ause the simulation.")

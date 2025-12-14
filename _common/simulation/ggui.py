@@ -24,19 +24,22 @@ class DrawingOption:
 class GGUI_Simulation(BaseSimulation):
     def __init__(
         self,
-        name: str,
-        res: tuple[int, int],
-        sampler: BasePoissonDiskSampler,
         configurations: list[Configuration],
+        sampler: BasePoissonDiskSampler,
+        res: tuple[int, int],
         solver: BaseSolver,
+        prefix: str,
+        name: str,
         initial_configuration: int = 0,
         radius=0.0015,
     ) -> None:
         super().__init__(
             initial_configuration=initial_configuration,
             configurations=configurations,
+            prefix=prefix,
             sampler=sampler,
             solver=solver,
+            name=name,
         )
 
         # GGUI.

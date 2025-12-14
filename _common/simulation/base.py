@@ -16,6 +16,8 @@ class BaseSimulation:
         configurations: list[Configuration],
         sampler: BasePoissonDiskSampler,
         solver: BaseSolver,
+        prefix: str,
+        name: str,
         initial_configuration: int = 0,
     ) -> None:
         """Constructs a Renderer object, this advances the MLS-MPM solver and renders the updated particle positions.
@@ -31,6 +33,10 @@ class BaseSimulation:
         self.should_write_to_disk = False
         self.is_showing_settings = not self.is_paused  # wether the settings are showing
         self.should_show_settings = True  # wether the settings should be shown
+
+        # Name and video/gif prefix
+        self.video_prefix = prefix
+        self.name = name
 
         # Create a parent directory, more directories will be created inside this
         # directory that contain newly created frames, videos and GIFs.
@@ -76,12 +82,14 @@ class BaseSimulation:
         Creates an output directory, a VideoManager in this directory and then dumps frames to this directory.
         """
         date = datetime.now().strftime("%d%m%Y_%H%M%S")
-        output_dir = f"{self.parent_dir}/{date}"
+        title = f"{self.video_prefix}_{date}"
+        output_dir = f"{self.parent_dir}/{title}"
         os.makedirs(output_dir)
         self.video_manager = ti.tools.VideoManager(
             output_dir=output_dir,
-            framerate=60,
+            video_filename=title,
             automatic_build=False,
+            framerate=60,
         )
 
     def create_video(self, should_create_gif=True, should_create_video=True) -> None:
