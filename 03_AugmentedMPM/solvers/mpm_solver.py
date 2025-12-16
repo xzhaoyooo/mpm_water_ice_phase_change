@@ -4,7 +4,6 @@ from _common.solvers import BaseSolver
 from typing import override
 
 import taichi as ti
-import math
 
 
 @ti.data_oriented
@@ -489,13 +488,11 @@ class AugmentedMPM(BaseSolver):
 
     @override
     def substep(self):
-        # TODO: find good dt and number of iterations
-        for _ in range(int(2e-3 // self.dt)):
-            self.reset_grids()
-            self.particle_to_grid()
-            self.momentum_to_velocity()
-            self.classify_cells()
-            self.compute_volumes()
-            self.pressure_solver.solve()
-            self.heat_solver.solve()
-            self.grid_to_particle()
+        self.reset_grids()
+        self.particle_to_grid()
+        self.momentum_to_velocity()
+        self.classify_cells()
+        self.compute_volumes()
+        self.pressure_solver.solve()
+        self.heat_solver.solve()
+        self.grid_to_particle()

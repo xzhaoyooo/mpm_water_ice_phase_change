@@ -6,7 +6,7 @@ from abc import abstractmethod
 from datetime import datetime
 
 import taichi as ti
-import os
+import math, os
 
 
 @ti.data_oriented
@@ -19,6 +19,7 @@ class BaseSimulation:
         prefix: str,
         name: str,
         initial_configuration: int = 0,
+        fps: int = 60,
     ) -> None:
         """Constructs a Renderer object, this advances the MLS-MPM solver and renders the updated particle positions.
         ---
@@ -35,6 +36,7 @@ class BaseSimulation:
         self.should_create_gif = False
         self.is_showing_settings = not self.is_paused  # wether the settings are showing
         self.should_show_settings = True  # wether the settings should be shown
+        self.fps = fps
 
         # Name and video/gif prefix
         self.video_prefix = prefix
@@ -77,7 +79,8 @@ class BaseSimulation:
         while self.has_loadable_geometry():
             self.sampler.add_geometry(self.subsequent_geometries.pop(0))
 
-        self.solver.substep()
+        for _ in range(math.ceil((1 / (self.fps * self.solver.dt[None])))):
+            self.solver.substep()
 
     def dump_frames(self) -> None:
         """
@@ -91,7 +94,7 @@ class BaseSimulation:
             output_dir=output_dir,
             video_filename=title,
             automatic_build=False,
-            framerate=60,
+            framerate=self.fps,
         )
 
     def create_video(self) -> None:

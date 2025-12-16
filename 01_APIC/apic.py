@@ -258,11 +258,10 @@ class APIC(BaseSolver):
         self.cy_p[index] = 0
 
     def substep(self) -> None:
-        for _ in range(4 * int(2e-3 // self.dt[None])):
-            self.reset_grids()
-            self.particle_to_grid()
-            self.classify_cells()
-            self.momentum_to_velocity()
-            self.compute_volumes()
-            self.correct_pressure()
-            self.grid_to_particle()
+        self.reset_grids()
+        self.particle_to_grid()
+        self.classify_cells()
+        self.momentum_to_velocity()
+        self.compute_volumes()
+        self.correct_pressure()
+        self.grid_to_particle()

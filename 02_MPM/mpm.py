@@ -147,8 +147,7 @@ class MPM(BaseSolver):
 
     @override
     def substep(self):
-        for _ in range(int(2e-3 // self.dt[None])):
-            self.reset_grids()
-            self.particle_to_grid()
-            self.momentum_to_velocity()
-            self.grid_to_particle()
+        self.reset_grids()
+        self.particle_to_grid()
+        self.momentum_to_velocity()
+        self.grid_to_particle()

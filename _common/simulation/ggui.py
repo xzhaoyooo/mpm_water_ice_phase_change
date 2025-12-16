@@ -43,7 +43,7 @@ class GGUI_Simulation(BaseSimulation):
         )
 
         # GGUI.
-        self.window = ti.ui.Window(name, res, fps_limit=60)
+        self.window = ti.ui.Window(name, res, fps_limit=self.fps)
         self.canvas = self.window.get_canvas()
         self.gui = self.window.get_gui()
         self.radius = radius
@@ -85,7 +85,6 @@ class GGUI_Simulation(BaseSimulation):
         load that configuration and reset the solver.
         """
         prev_configuration_id = self.configuration_id
-        # with self.gui.sub_window("Configurations", 0.01, 0.01, 0.48, 0.48) as subwindow:
         with self.gui.sub_window("Configurations", 0.01, 0.01, 0.65, 0.64) as subwindow:
             for i in range(len(self.configurations)):
                 name = self.configurations[i].name
