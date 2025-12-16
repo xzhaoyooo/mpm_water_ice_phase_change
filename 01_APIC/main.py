@@ -27,9 +27,8 @@ def main():
     max_particles = 500_000
     n_grid = 128 * arguments.quality
     radius = 1 / (n_pc * float(n_grid))  # dx / 4
-    dt = 1e-3 / arguments.quality
 
-    solver = APIC(max_particles, n_grid, dt)
+    solver = APIC(max_particles, n_grid)
     sampler = BasePoissonDiskSampler(solver=solver, r=radius, k=30)
 
     simulation = GGUI_Simulation(

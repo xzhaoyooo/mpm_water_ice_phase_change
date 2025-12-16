@@ -4,6 +4,7 @@ from _common.constants import Water
 configuration_list = [
     Configuration(
         name="Waterjet Hits Pool",
+        dt = 1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -25,6 +26,7 @@ configuration_list = [
     ),
     Configuration(
         name="Dam Break",
+        dt = 1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -36,6 +38,7 @@ configuration_list = [
     ),
     Configuration(
         name="Centered Dam Break",
+        dt = 1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -47,6 +50,7 @@ configuration_list = [
     ),
     Configuration(
         name="Waterjet",
+        dt = 1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -60,6 +64,7 @@ configuration_list = [
     ),
     Configuration(
         name="Spherefall",
+        dt = 1e-3,
         geometries=[
             Circle(
                 material=Water,  # pyright: ignore
@@ -71,6 +76,7 @@ configuration_list = [
     ),
     Configuration(
         name="Stationary Pool",
+        dt = 1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore

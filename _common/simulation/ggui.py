@@ -143,6 +143,13 @@ class GGUI_Simulation(BaseSimulation):
                 minimum=0,
                 maximum=-9.81,
             )
+            # NOTE: dt needs to be scaled, otherwise the precision of slider_float is not enough
+            self.solver.dt[None] = subwindow.slider_float(
+                text="10 * dt",
+                old_value=self.solver.dt[None] * 10,  # pyright: ignore
+                minimum=1e-3,
+                maximum=3e-2,
+            ) / 10
 
     def show_buttons(self) -> None:
         """

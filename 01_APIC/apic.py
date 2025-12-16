@@ -8,8 +8,8 @@ import taichi as ti
 
 @ti.data_oriented
 class APIC(BaseSolver):
-    def __init__(self, max_particles: int, n_grid: int, dt: float):
-        super().__init__(max_particles, n_grid, dt)
+    def __init__(self, max_particles: int, n_grid: int):
+        super().__init__(max_particles, n_grid)
 
         # Properties on MAC-faces:
         self.classification_x = ti.field(dtype=ti.int8, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
@@ -106,7 +106,7 @@ class APIC(BaseSolver):
         for i, j in self.velocity_y:
             if (mass := self.mass_y[i, j]) > 0:
                 self.velocity_y[i, j] /= mass
-                self.velocity_y[i, j] += self.gravity[None] * self.dt
+                self.velocity_y[i, j] += self.gravity[None] * self.dt[None]
                 collision_top = j >= self.n_grid and self.velocity_y[i, j] > 0
                 collision_bottom = j <= 0 and self.velocity_y[i, j] < 0
                 if collision_top or collision_bottom:
@@ -125,7 +125,7 @@ class APIC(BaseSolver):
 
     @ti.kernel
     def fill_pressure_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
-        coefficient = self.dt * self.inv_dx * self.inv_dx
+        coefficient = self.dt[None] * self.inv_dx * self.inv_dx
         for i, j in ti.ndrange(self.n_grid, self.n_grid):
             center = 0.0  # to keep max_num_triplets as low as possible
             idx = (i * self.n_grid) + j  # raveled index
@@ -174,7 +174,7 @@ class APIC(BaseSolver):
 
     @ti.kernel
     def apply_pressure(self, pressure: ti.types.ndarray()):  # pyright: ignore
-        coefficient = self.dt * self.inv_dx
+        coefficient = self.dt[None] * self.inv_dx
         for i, j in ti.ndrange(self.n_grid, self.n_grid):
             idx = i * self.n_grid + j
             if self.is_interior(i - 1, j) or self.is_interior(i, j):
@@ -243,7 +243,7 @@ class APIC(BaseSolver):
             self.cx_p[p] = b_x * 4 * self.inv_dx
             self.cy_p[p] = b_y * 4 * self.inv_dx
             self.velocity_p[p] = next_velocity
-            self.position_p[p] += self.dt * next_velocity
+            self.position_p[p] += self.dt[None] * next_velocity
 
     @ti.func
     def add_particle(self, index: ti.i32, position: ti.template(), geometry: ti.template()):  # pyright: ignore
@@ -258,7 +258,7 @@ class APIC(BaseSolver):
         self.cy_p[index] = 0
 
     def substep(self) -> None:
-        for _ in range(4 * int(2e-3 // self.dt)):
+        for _ in range(4 * int(2e-3 // self.dt[None])):
             self.reset_grids()
             self.particle_to_grid()
             self.classify_cells()

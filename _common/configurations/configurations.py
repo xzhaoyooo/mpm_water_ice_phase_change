@@ -11,26 +11,16 @@ class Configuration:
         self,
         name: str,
         geometries: list[Geometry],
+        dt=1e-4,
         gravity=-9.81,  # Gravity
-        nu=0.2,  # Poisson's ratio (0.2)
-        E=2.8e5,  # Young's modulus (1.4e5)
-        zeta=10,  # Hardening coefficient (10)
-        theta_c=2.5e-2,  # Critical compression (2.5e-2)
-        theta_s=7.5e-3,  # Critical stretch (7.5e-3)
         ambient_temperature=0.0,  # temperature of empty cells
         boundary_temperature=0.0,  # temperature of boundary cells
         information: str = "",
     ):
-        self.E = E
-        self.nu = nu
+        self.dt = dt
         self.name = name
-        self.zeta = zeta
-        self.theta_c = theta_c
-        self.theta_s = theta_s
         self.gravity = gravity
         self.information = information
-        self.mu_0 = self.E / (2 * (1 + self.nu))
-        self.lambda_0 = self.E * self.nu / ((1 + self.nu) * (1 - 2 * self.nu))
         self.ambient_temperature = ambient_temperature
         self.boundary_temperature = boundary_temperature
 

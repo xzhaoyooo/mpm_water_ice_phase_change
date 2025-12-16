@@ -4,12 +4,13 @@ from _common.solvers import BaseSolver
 from typing import override
 
 import taichi as ti
+import math
 
 
 @ti.data_oriented
 class AugmentedMPM(BaseSolver):
-    def __init__(self, max_particles: int, n_grid: int, dt: float):
-        super().__init__(max_particles, n_grid, dt)
+    def __init__(self, max_particles: int, n_grid: int):
+        super().__init__(max_particles, n_grid)
 
         # Properties on MAC-faces.
         self.classification_x = ti.field(dtype=ti.i32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
@@ -123,11 +124,13 @@ class AugmentedMPM(BaseSolver):
                 continue
 
             # Update deformation gradient:
-            self.FE_p[p] = (ti.Matrix.identity(float, 2) + self.dt * self.C_p[p]) @ self.FE_p[p]  # pyright: ignore
+            self.FE_p[p] = (ti.Matrix.identity(float, 2) + self.dt[None] * self.C_p[p]) @ self.FE_p[
+                p
+            ]  # pyright: ignore
             # TODO: R might not be needed for our small timesteps? then remove R and everything
-            # self.FE_p[p] = self.R(self.dt * self.C_p[p]) @ self.FE_p[p]  # pyright: ignore
+            # self.FE_p[p] = self.R(self.dt[None] * self.C_p[p]) @ self.FE_p[p]  # pyright: ignore
             # TODO: could this just be simplified to: (or would this be unstable?)
-            # self.FE_p[p] += (self.dt * self.C_p[p]) @ self.FE_p[p]  # pyright: ignore
+            # self.FE_p[p] += (self.dt[None] * self.C_p[p]) @ self.FE_p[p]  # pyright: ignore
 
             # Remove the deviatoric component from the deformation gradient:
             if self.phase_p[p] == Water.Phase:
@@ -136,7 +139,7 @@ class AugmentedMPM(BaseSolver):
             # Clamp singular values to simulate plasticity and elasticity:
             U, sigma, V = ti.svd(self.FE_p[p])
             self.JE_p[p] = 1.0
-            for d in ti.static(range(self.n_dimensions)):
+            for d in ti.static(range(2)):
                 singular_value = ti.f32(sigma[d, d])
                 clamped = ti.f32(sigma[d, d])
                 if self.phase_p[p] == Ice.Phase:
@@ -173,7 +176,7 @@ class AugmentedMPM(BaseSolver):
             D_inv = 3 * self.inv_dx * self.inv_dx  # Cubic interpolation
 
             # Cauchy stress times dt and D_inv:
-            cauchy_stress = -self.dt * self.vol_0_p * D_inv * piola_kirchhoff
+            cauchy_stress = -self.dt[None] * self.vol_0_p * D_inv * piola_kirchhoff
 
             # APIC momentum + MLS-MPM stress contribution [Hu et al. 2018, Eqn. 29].
             affine = cauchy_stress + self.mass_p[p] * self.C_p[p]
@@ -268,7 +271,7 @@ class AugmentedMPM(BaseSolver):
         for i, j in self.velocity_y:
             if (mass_y := self.mass_y[i, j]) > 0:
                 self.velocity_y[i, j] /= mass_y
-                self.velocity_y[i, j] += self.gravity[None] * self.dt
+                self.velocity_y[i, j] += self.gravity[None] * self.dt[None]
                 # TODO: use face/cell classfications here
                 collision_top = j >= self.n_grid and self.velocity_y[i, j] > 0
                 collision_bottom = j <= 0 and self.velocity_y[i, j] < 0
@@ -417,7 +420,7 @@ class AugmentedMPM(BaseSolver):
             c_x = 3 * self.inv_dx * b_x  # C = B @ (D^(-1)), inv_dx cancelled out by dx in dpos
             c_y = 3 * self.inv_dx * b_y  # C = B @ (D^(-1)), inv_dx cancelled out by dx in dpos
             self.C_p[p] = ti.Matrix([[c_x[0], c_y[0]], [c_x[1], c_y[1]]])  # pyright: ignore
-            self.position_p[p] += self.dt * next_velocity
+            self.position_p[p] += self.dt[None] * next_velocity
             self.velocity_p[p] = next_velocity
 
             # DONE: set temperature for empty cells
@@ -452,7 +455,7 @@ class AugmentedMPM(BaseSolver):
                     self.phase_p[p] = Water.Phase
                     self.mass_p[p] = self.vol_0_p * Water.Density
                     self.mu_p[p] = Water.Mu
-                    self.FE_p[p] = ti.Matrix.identity(ti.f32, self.n_dimensions)
+                    self.FE_p[p] = ti.Matrix.identity(ti.f32, 2)
                     self.JP_p[p] = 1.0
                     self.JE_p[p] = 1.0
 
@@ -473,7 +476,7 @@ class AugmentedMPM(BaseSolver):
                     self.phase_p[p] = Ice.Phase
                     self.mass_p[p] = self.vol_0_p * Ice.Density
                     self.mu_p[p] = self.mu_p[p]
-                    self.FE_p[p] = ti.Matrix.identity(ti.f32, self.n_dimensions)
+                    self.FE_p[p] = ti.Matrix.identity(ti.f32, 2)
                     self.JP_p[p] = 1.0
                     self.JE_p[p] = 1.0
 

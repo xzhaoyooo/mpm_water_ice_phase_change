@@ -4,6 +4,7 @@ from _common.constants import Ice, Water
 configuration_list = [
     Configuration(
         name="Snowball Smashes Into Wall",
+        dt=1e-4,
         information="Ice",
         geometries=[
             Circle(
@@ -17,6 +18,7 @@ configuration_list = [
     Configuration(
         name="Snowball Smashes Into Snowball",
         information="Ice",
+        dt=1e-4,
         geometries=[
             Circle(
                 center=(0.15, 0.55),
@@ -35,6 +37,7 @@ configuration_list = [
     Configuration(
         name="Snowballs Smash Into Wall",
         information="Ice",
+        dt=1e-4,
         geometries=[
             *[
                 Circle(
@@ -67,6 +70,7 @@ configuration_list = [
     ),
     Configuration(
         name="Floating, Melting Ice Ball",
+        dt=1e-4,
         information="Ice -> Water",
         geometries=[
             Circle(
@@ -81,8 +85,10 @@ configuration_list = [
         gravity=0.0,
     ),
     Configuration(
+        dt=1e-4,
         name="Melting Ice Cube",
         information="Ice -> Water",
+        ambient_temperature=100.0,
         geometries=[
             Rectangle(
                 material=Ice,  # pyright: ignore
@@ -92,11 +98,12 @@ configuration_list = [
                 temperature=-10.0,
             ),
         ],
-        ambient_temperature=100.0,
     ),
     Configuration(
+        dt=1e-3,
         name="Waterjet & Lake",
         information="Water",
+        ambient_temperature=20.0,
         geometries=[
             Rectangle(
                 lower_left=(0.0, 0.0),
@@ -117,16 +124,12 @@ configuration_list = [
                 for i in range(1, 300)
             ],
         ],
-        E=5e5,  # Young's modulus (1.4e5)
-        nu=0.45,  # Poisson's ratio (0.2)
-        zeta=10,  # Hardening coefficient (10)
-        theta_c=2.5e-2,  # Critical compression (2.5e-2)
-        theta_s=5.0e-3,  # Critical stretch (7.5e-3)
-        ambient_temperature=20.0,
     ),
     Configuration(
+        dt=1e-3,
         name="Dam Break",
         information="Water",
+        ambient_temperature=20.0,
         geometries=[
             Rectangle(
                 lower_left=(0.0, 0.0),
@@ -136,11 +139,12 @@ configuration_list = [
                 velocity=(0, 0),
             ),
         ],
-        ambient_temperature=20.0,
     ),
     Configuration(
-        name="Dam Break, Centered",
+        dt=1e-3,
         information="Water",
+        name="Dam Break, Centered",
+        ambient_temperature=20.0,
         geometries=[
             Rectangle(
                 lower_left=(0.35, 0.0),
@@ -150,7 +154,6 @@ configuration_list = [
                 velocity=(0, 0),
             ),
         ],
-        ambient_temperature=20.0,
     ),
     Configuration(
         name="Lake",
@@ -167,8 +170,10 @@ configuration_list = [
         ambient_temperature=20.0,
     ),
     Configuration(
+        dt=1e-4,
         name="Ice Cubes Dropped Into Lake",
         information="Water, Ice -> Water",
+        ambient_temperature=0.0,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -203,11 +208,12 @@ configuration_list = [
                 temperature=-30.0,
             ),
         ],
-        ambient_temperature=0.0,
     ),
     Configuration(
+        dt=1e-3,
         name="Freezing Lake",
         information="Water -> Ice",
+        ambient_temperature=-500.0,
         geometries=[
             Rectangle(
                 lower_left=(0.0, 0.0),
@@ -217,9 +223,9 @@ configuration_list = [
                 velocity=(0, 0),
             ),
         ],
-        ambient_temperature=-500.0,
     ),
     Configuration(
+        dt=1e-4,
         name="Waterjet & Ice Cubes",
         information="Water, Ice -> Water",
         ambient_temperature=5.0,
@@ -280,6 +286,7 @@ configuration_list = [
         ],
     ),
     Configuration(
+        dt=1e-4,
         name="Waterjet & Snowballs",
         information="Water, Ice -> Water",
         geometries=[
@@ -308,6 +315,7 @@ configuration_list = [
         ],
     ),
     Configuration(
+        dt=1e-3,
         name="Waterjet",
         information="Water",
         geometries=[
@@ -323,8 +331,10 @@ configuration_list = [
         ],
     ),
     Configuration(
+        dt=1e-3,
         name="Spherefall",
         information="Water",
+        ambient_temperature=50.0,
         geometries=[
             Circle(
                 center=(0.5, 0.5),
@@ -333,11 +343,12 @@ configuration_list = [
                 radius=0.1,
             )
         ],
-        ambient_temperature=50.0,
     ),
     Configuration(
+        dt=1e-4,
         name="Spherefall",
         information="Ice",
+        ambient_temperature=-50.0,
         geometries=[
             Circle(
                 center=(0.5, 0.4),
@@ -346,11 +357,12 @@ configuration_list = [
                 radius=0.1,
             ),
         ],
-        ambient_temperature=-50.0,
     ),
     Configuration(
+        dt=1e-4,
         name="Spherefall",
         information="Water, Ice",
+        ambient_temperature=0.0,
         geometries=[
             Circle(
                 center=(0.25, 0.25),
@@ -367,7 +379,6 @@ configuration_list = [
                 radius=0.1,
             ),
         ],
-        ambient_temperature=0.0,
     ),
 ]
 

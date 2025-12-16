@@ -7,15 +7,12 @@ import taichi as ti
 
 @ti.data_oriented
 class BaseSolver(ABC):
-    def __init__(self, max_particles: int, n_grid: int, dt: float):
-        self.n_particles = ti.field(dtype=ti.int32, shape=())
+    def __init__(self, max_particles: int, n_grid: int):
+        self.vol_0_p = (0.5 / n_grid) ** 2
         self.max_particles = max_particles
+        self.inv_dx = float(n_grid)
         self.n_grid = n_grid
-        self.dx = 1 / self.n_grid
-        self.inv_dx = float(self.n_grid)
-        self.vol_0_p = (self.dx * 0.5) ** 2
-        self.n_dimensions = 2
-        self.dt = dt
+        self.dx = 1 / n_grid
 
         # The width of the simulation boundary in grid nodes and offsets to
         # guarantee that seeded particles always lie within the boundary:
@@ -28,7 +25,9 @@ class BaseSolver(ABC):
         # Variables accessed by kernels must be stored in fields:
         self.ambient_temperature = ti.field(dtype=ti.f32, shape=())
         self.boundary_temperature = ti.field(dtype=ti.f32, shape=())
+        self.n_particles = ti.field(dtype=ti.int32, shape=())
         self.gravity = ti.field(dtype=ti.f32, shape=())
+        self.dt = ti.field(dtype=ti.f32, shape=())
 
         # Properties on cell centers:
         self.classification_c = ti.field(dtype=ti.i32, shape=(self.w_grid, self.w_grid), offset=self.w_offset)
@@ -84,6 +83,7 @@ class BaseSolver(ABC):
         self.boundary_temperature[None] = configuration.boundary_temperature
         self.ambient_temperature[None] = configuration.ambient_temperature
         self.gravity[None] = configuration.gravity
+        self.dt[None] = configuration.dt
         self.state_p.fill(State.Hidden)
         self.position_p.fill([42, 42])
         self.n_particles[None] = 0

@@ -8,8 +8,8 @@ import taichi as ti
 
 @ti.data_oriented
 class MPM(BaseSolver):
-    def __init__(self, max_particles: int, n_grid: int, dt: float):
-        super().__init__(max_particles, n_grid, dt)
+    def __init__(self, max_particles: int, n_grid: int):
+        super().__init__(max_particles, n_grid)
 
         # Particle properties:
         self.theta_c_p = ti.field(dtype=ti.f32, shape=max_particles)
@@ -62,7 +62,7 @@ class MPM(BaseSolver):
                 continue
 
             # Deformation gradient update
-            self.FE_p[p] = (ti.Matrix.identity(float, 2) + self.dt * self.C_p[p]) @ self.FE_p[p]  # pyright: ignore
+            self.FE_p[p] = (ti.Matrix.identity(float, 2) + self.dt[None] * self.C_p[p]) @ self.FE_p[p]  # pyright: ignore
 
             # Apply snow hardening by adjusting Lame parameters
             h = ti.max(0.1, ti.min(50, ti.exp(self.zeta_p[p] * (1.0 - self.JP_p[p]))))
@@ -86,7 +86,7 @@ class MPM(BaseSolver):
             piola_kirchhoff += ti.Matrix.identity(float, 2) * la * J * (J - 1)
 
             # Cauchy stress times dt and D_inv
-            cauchy_stress = -self.dt * self.vol_0_p * 4 * self.inv_dx * self.inv_dx * piola_kirchhoff
+            cauchy_stress = -self.dt[None] * self.vol_0_p * 4 * self.inv_dx * self.inv_dx * piola_kirchhoff
 
             # APIC momentum + MLS-MPM stress contribution [Hu et al. 2018, Eqn. 29].
             affine = cauchy_stress + self.mass_p[p] * self.C_p[p]
@@ -116,7 +116,7 @@ class MPM(BaseSolver):
             # Normalize velocity, add gravity:
             if self.mass_c[i, j] > 0:
                 self.velocity_c[i, j] /= self.mass_c[i, j]
-                self.velocity_c[i, j][1] += self.dt * self.gravity[None]
+                self.velocity_c[i, j][1] += self.dt[None] * self.gravity[None]
 
             # Sticky simulation boundary:
             if i < 0 or i > self.n_grid or j < 0 or j > self.n_grid:
@@ -143,11 +143,11 @@ class MPM(BaseSolver):
                 v += weight * g_v
 
             self.velocity_p[p], self.C_p[p] = v, C
-            self.position_p[p] += self.dt * v
+            self.position_p[p] += self.dt[None] * v
 
     @override
     def substep(self):
-        for _ in range(int(2e-3 // self.dt)):
+        for _ in range(int(2e-3 // self.dt[None])):
             self.reset_grids()
             self.particle_to_grid()
             self.momentum_to_velocity()

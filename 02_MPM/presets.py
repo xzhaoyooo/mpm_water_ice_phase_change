@@ -5,11 +5,8 @@ from _common.constants import Ice, Snow, PurpleSnow, MagentaSnow
 configuration_list = [
     Configuration(
         name="Snowball hits wall [1]",
-        E=2.8e5,  # Young's modulus (1.4e5)
-        nu=0.2,  # Poisson's ratio (0.2)
-        zeta=10,  # Hardening coefficient (10)
-        theta_c=3.5e-2,  # Critical compression (2.5e-2)
-        theta_s=7.5e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=Snow,  # pyright: ignore
@@ -21,11 +18,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits ground [1]",
-        E=2.8e5,  # Young's modulus (1.4e5)
-        nu=0.2,  # Poisson's ratio (0.2)
-        zeta=10,  # Hardening coefficient (10)
-        theta_c=2.5e-2,  # Critical compression (2.5e-2)
-        theta_s=7.5e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=Snow,  # pyright: ignore
@@ -37,6 +31,8 @@ configuration_list = [
     ),
     Configuration(
         name="Ice Cube Fall",
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Rectangle(
                 material=Ice,  # pyright: ignore
@@ -49,6 +45,8 @@ configuration_list = [
     ),
     Configuration(
         name="Ice Cube vs. Snow Cube",
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Rectangle(
                 material=Ice,  # pyright: ignore
@@ -68,11 +66,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits snowball [1]",
-        E=2.8e5,  # Young's modulus (1.4e5)
-        nu=0.25,  # Poisson's ratio (0.2)
-        zeta=8,  # Hardening coefficient (10)
-        theta_c=3.5e-2,  # Critical compression (2.5e-2)
-        theta_s=7.5e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=Snow,  # pyright: ignore
@@ -90,11 +85,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits snowball (colored) [1]",
-        E=2.8e5,  # Young's modulus (1.4e5)
-        nu=0.25,  # Poisson's ratio (0.2)
-        zeta=8,  # Hardening coefficient (10)
-        theta_c=3.5e-2,  # Critical compression (2.5e-2)
-        theta_s=7.5e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=MagentaSnow,  # pyright: ignore
@@ -112,11 +104,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits snowball [2]",
-        E=1.4e5,  # Young's modulus (1.4e5)
-        nu=0.2,  # Poisson's ratio (0.2)
-        zeta=5,  # Hardening coefficient (10)
-        theta_c=2.5e-2,  # Critical compression (2.5e-2)
-        theta_s=4.0e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=Snow,  # pyright: ignore
@@ -134,11 +123,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits snowball (colored) [2]",
-        E=1.4e5,  # Young's modulus (1.4e5)
-        nu=0.2,  # Poisson's ratio (0.2)
-        zeta=5,  # Hardening coefficient (10)
-        theta_c=2.5e-2,  # Critical compression (2.5e-2)
-        theta_s=4.0e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=PurpleSnow,  # pyright: ignore
@@ -156,11 +142,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits snowball (high velocity) [3]",
-        E=1.4e5,  # Young's modulus (1.4e5)
-        nu=0.2,  # Poisson's ratio (0.2)
-        zeta=5,  # Hardening coefficient (10)
-        theta_c=4.5e-2,  # Critical compression (2.5e-2)
-        theta_s=4.0e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=Snow,  # pyright: ignore
@@ -178,11 +161,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits snowball (colored, high velocity) [3]",
-        E=1.4e5,  # Young's modulus (1.4e5)
-        nu=0.2,  # Poisson's ratio (0.2)
-        zeta=5,  # Hardening coefficient (10)
-        theta_c=4.5e-2,  # Critical compression (2.5e-2)
-        theta_s=4.0e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=MagentaSnow,  # pyright: ignore
@@ -200,11 +180,8 @@ configuration_list = [
     ),
     Configuration(
         name="Snowball hits giant snowball",
-        E=1.4e5,  # Young's modulus (1.4e5)
-        nu=0.2,  # Poisson's ratio (0.2)
-        zeta=5,  # Hardening coefficient (10)
-        theta_c=2.5e-2,  # Critical compression (2.5e-2)
-        theta_s=4.0e-3,  # Critical stretch (7.5e-3)
+        dt = 1e-4,
+        gravity = -9.81,
         geometries=[
             Circle(
                 material=Snow,  # pyright: ignore

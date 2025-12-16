@@ -40,7 +40,7 @@ class HeatSolver:
 
             # Compute (1 / dx^2) * ((dt * dx^d) / (m_c * c_c)) [Jiang 2016, Ch. 5.8],
             # NOTE: dx^d is cancelled out by 1 / dx^2 because d == 2.
-            dt_inv_mass_capacity = self.dt / (self.mass_c[i, j] * self.capacity_c[i, j])
+            dt_inv_mass_capacity = self.dt[None] / (self.mass_c[i, j] * self.capacity_c[i, j])
             inv_dx_sqrd = self.inv_dx * self.inv_dx
             diagonal = 1.0  # to keep max_num_triplets as low as possible
 

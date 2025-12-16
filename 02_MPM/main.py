@@ -23,11 +23,10 @@ def main():
     else:
         ti.init(arch=ti.cuda, debug=arguments.debug)
 
-    dt = 1e-4
     max_particles = 100_000
     n_grid = 128 * arguments.quality
 
-    mpm_solver = MPM(max_particles, n_grid, dt)
+    mpm_solver = MPM(max_particles, n_grid)
     poisson_disk_sampler = BasePoissonDiskSampler(solver=mpm_solver, r=0.002, k=30)
 
     name = "Material Point Method for Snow Simulation"

@@ -29,7 +29,7 @@ class PressureSolver:
 
     @ti.kernel
     def fill_linear_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
-        dt_inv_dx_sqrd = self.dt * self.inv_dx * self.inv_dx
+        dt_inv_dx_sqrd = self.dt[None] * self.inv_dx * self.inv_dx
         for i, j in ti.ndrange(self.n_grid, self.n_grid):
             diagonal = 0.0  # to keep max_num_triplets as low as possible
             idx = (i * self.n_grid) + j  # raveled index
@@ -43,12 +43,12 @@ class PressureSolver:
             # Build the right-hand side of the linear system:
             # NOTE: JE_c approaches 1 for incompressible materials, this way we end up with the usual
             #       pressure equation for cells where a lot of incompressible material has accumulated.
-            b[idx] = (1 - self.JE_c[i, j]) / (self.dt * self.JE_c[i, j])
+            b[idx] = (1 - self.JE_c[i, j]) / (self.dt[None] * self.JE_c[i, j])
 
             # Build the left-hand side of the linear system:
             # NOTE: lambda_c approaches infinity for incompressible materials, this way we end up with the
             #       usual pressure equation for cells where a lot of incompressible material has accumulated.
-            diagonal += (self.JP_c[i, j] / (self.dt * self.JE_c[i, j])) * self.inv_lambda_c[i, j]
+            diagonal += (self.JP_c[i, j] / (self.dt[None] * self.JE_c[i, j])) * self.inv_lambda_c[i, j]
 
             # We enforce homogeneous Neumann boundary conditions at FACES adjacent to cells that have been marked as colliding.
             if not self.mpm_solver.is_colliding(i + 1, j):  # homogeneous Neumann
@@ -83,7 +83,7 @@ class PressureSolver:
 
     @ti.kernel
     def apply_pressure(self, pressure: ti.types.ndarray()):  # pyright: ignore
-        coefficient = self.dt * self.inv_dx
+        coefficient = self.dt[None] * self.inv_dx
         for i, j in ti.ndrange(self.n_grid, self.n_grid):
             idx = i * self.n_grid + j
             if self.mpm_solver.is_interior(i - 1, j) or self.mpm_solver.is_interior(i, j):
