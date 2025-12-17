@@ -16,7 +16,7 @@ class BaseSolver(ABC):
 
         # The width of the simulation boundary in grid nodes and offsets to
         # guarantee that seeded particles always lie within the boundary:
-        self.boundary_width = 5
+        self.boundary_width = 3
         self.w_grid = self.n_grid + self.boundary_width + self.boundary_width
         self.w_offset = (-self.boundary_width, -self.boundary_width)
         self.negative_boundary = -self.boundary_width
@@ -49,9 +49,9 @@ class BaseSolver(ABC):
 
     @ti.func
     def is_valid(self, i: int, j: int) -> bool:
-        in_horizontal_bounds = i >= self.negative_boundary and i < self.positive_boundary
-        in_vertical_bounds = j >= self.negative_boundary and j < self.positive_boundary
-        return in_horizontal_bounds and in_vertical_bounds
+        _is_valid = self.negative_boundary < i < self.positive_boundary
+        _is_valid = self.negative_boundary < j < self.positive_boundary
+        return _is_valid
 
     @ti.func
     def is_colliding(self, i: int, j: int) -> bool:

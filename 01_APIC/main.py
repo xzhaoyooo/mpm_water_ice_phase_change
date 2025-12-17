@@ -15,7 +15,7 @@ import taichi as ti
 
 def main():
     # Initialize Taichi on the chosen architecture:
-    ti.init(arch=ti.cuda if should_use_cuda_backend else ti.cpu, debug=True)
+    ti.init(arch=ti.cuda if should_use_cuda_backend else ti.cpu, debug=False)
 
     initial_configuration = arguments.configuration % len(configuration_list)
     name = f"Affine Particle-In-Cell Method"

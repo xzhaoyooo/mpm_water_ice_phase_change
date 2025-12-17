@@ -27,11 +27,9 @@ class BasePoissonDiskSampler(ABC):
 
         # The width of the simulation boundary in grid nodes and offsets to
         # guarantee that seeded particles always lie within the boundary:
-        self.boundary_width = 5
+        self.boundary_width = 3
         self.w_grid = self.n_grid + self.boundary_width + self.boundary_width
         self.w_offset = (-self.boundary_width, -self.boundary_width)
-        # self.negative_boundary = -self.boundary_width
-        # self.positive_boundary = self.n_grid + self.boundary_width
 
         # Initialize an n-dimension background grid to store samples:
         self.background_grid = ti.field(dtype=ti.i32, shape=(self.w_grid, self.w_grid), offset=self.w_offset)

@@ -12,8 +12,6 @@ class APIC(BaseSolver):
         super().__init__(max_particles, n_grid, vol_0)
 
         # Properties on MAC-faces:
-        self.classification_x = ti.field(dtype=ti.int8, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
-        self.classification_y = ti.field(dtype=ti.int8, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
         self.velocity_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
         self.velocity_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
         self.volume_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
@@ -125,10 +123,10 @@ class APIC(BaseSolver):
 
     @ti.kernel
     def fill_pressure_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
-        coefficient = self.dt[None] * self.inv_dx * self.inv_dx
-        for i, j in ti.ndrange(self.n_grid, self.n_grid):
-            center = 0.0  # to keep max_num_triplets as low as possible
-            idx = (i * self.n_grid) + j  # raveled index
+        dt_inv_dx_sqrd = self.dt[None] * self.inv_dx * self.inv_dx
+        for i, j in ti.ndrange(self.w_grid, self.w_grid):
+            diagonal = 0.0  # to keep max_num_triplets as low as possible
+            idx = (i * self.w_grid) + j  # raveled index
 
             if not self.is_interior(i, j):  # homogeneous Dirichlet
                 A[idx, idx] += 1.0
@@ -142,58 +140,58 @@ class APIC(BaseSolver):
             # idx(i, j) = (i * n) + j
             #   => idx(i - 1, j) = ((i - 1) * n) + j = (i * n) + j - n = idx(i, j) - n
             #   => idx(i, j - 1) = (i * n) + j - 1 = idx(i, j) - 1, etc.
-            if not self.is_colliding(i - 1, j):  # homogeneous Neumann
-                inv_rho = self.volume_x[i, j] / self.mass_x[i, j]
-                b[idx] -= self.inv_dx * self.velocity_x[i, j]
-                center -= coefficient * inv_rho
-                if self.is_interior(i - 1, j):  # homogeneous Dirichlet
-                    A[idx, idx - self.n_grid] += coefficient * inv_rho
-
             if not self.is_colliding(i + 1, j):  # homogeneous Neumann
                 inv_rho = self.volume_x[i + 1, j] / self.mass_x[i + 1, j]
                 b[idx] += self.inv_dx * self.velocity_x[i + 1, j]
-                center -= coefficient * inv_rho
-                if self.is_interior(i + 1, j):  # homogeneous Dirichlet
-                    A[idx, idx + self.n_grid] += coefficient * inv_rho
+                diagonal += dt_inv_dx_sqrd * inv_rho
+                if not self.is_empty(i + 1, j):  # homogeneous Dirichlet
+                    A[idx, idx + self.w_grid] -= dt_inv_dx_sqrd * inv_rho
 
-            if not self.is_colliding(i, j - 1):  # homogeneous Neumann
-                inv_rho = self.volume_y[i, j] / self.mass_y[i, j]
-                b[idx] -= self.inv_dx * self.velocity_y[i, j]
-                center -= coefficient * inv_rho
-                if self.is_interior(i, j - 1):  # homogeneous Dirichlet
-                    A[idx, idx - 1] += coefficient * inv_rho
+            if not self.is_colliding(i - 1, j):  # homogeneous Neumann
+                inv_rho = self.volume_x[i, j] / self.mass_x[i, j]
+                b[idx] -= self.inv_dx * self.velocity_x[i, j]
+                diagonal += dt_inv_dx_sqrd * inv_rho
+                if not self.is_empty(i - 1, j):  # homogeneous Dirichlet
+                    A[idx, idx - self.w_grid] -= dt_inv_dx_sqrd * inv_rho
 
             if not self.is_colliding(i, j + 1):  # homogeneous Neumann
                 inv_rho = self.volume_y[i, j + 1] / self.mass_y[i, j + 1]
                 b[idx] += self.inv_dx * self.velocity_y[i, j + 1]
-                center -= coefficient * inv_rho
-                if self.is_interior(i, j + 1):  # homogeneous Dirichlet
-                    A[idx, idx + 1] += coefficient * inv_rho
+                diagonal += dt_inv_dx_sqrd * inv_rho
+                if not self.is_empty(i, j + 1):  # homogeneous Dirichlet
+                    A[idx, idx + 1] -= dt_inv_dx_sqrd * inv_rho
 
-            A[idx, idx] += center
+            if not self.is_colliding(i, j - 1):  # homogeneous Neumann
+                inv_rho = self.volume_y[i, j] / self.mass_y[i, j]
+                b[idx] -= self.inv_dx * self.velocity_y[i, j]
+                diagonal += dt_inv_dx_sqrd * inv_rho
+                if not self.is_empty(i, j - 1):  # homogeneous Dirichlet
+                    A[idx, idx - 1] -= dt_inv_dx_sqrd * inv_rho
+
+            A[idx, idx] += diagonal
 
     @ti.kernel
     def apply_pressure(self, pressure: ti.types.ndarray()):  # pyright: ignore
         coefficient = self.dt[None] * self.inv_dx
-        for i, j in ti.ndrange(self.n_grid, self.n_grid):
-            idx = i * self.n_grid + j
+        for i, j in ti.ndrange(self.w_grid, self.w_grid):
+            idx = i * self.w_grid + j
             if self.is_interior(i - 1, j) or self.is_interior(i, j):
                 if not (self.is_colliding(i - 1, j) or self.is_colliding(i, j)):
-                    pressure_gradient = pressure[idx] - pressure[idx - self.n_grid]
+                    pressure_gradient = pressure[idx] - pressure[idx - self.w_grid]
                     inv_rho = self.volume_x[i, j] / self.mass_x[i, j]
-                    self.velocity_x[i, j] -= inv_rho * coefficient * pressure_gradient
+                    self.velocity_x[i, j] += inv_rho * coefficient * pressure_gradient
                 else:
                     self.velocity_x[i, j] = 0
             if self.is_interior(i, j - 1) or self.is_interior(i, j):
                 if not (self.is_colliding(i, j - 1) or self.is_colliding(i, j)):
                     pressure_gradient = pressure[idx] - pressure[idx - 1]
                     inv_rho = self.volume_y[i, j] / self.mass_y[i, j]
-                    self.velocity_y[i, j] -= inv_rho * coefficient * pressure_gradient
+                    self.velocity_y[i, j] += inv_rho * coefficient * pressure_gradient
                 else:
                     self.velocity_y[i, j] = 0
 
     def correct_pressure(self):
-        n_cells = self.n_grid * self.n_grid
+        n_cells = self.w_grid * self.w_grid
         A = SparseMatrixBuilder(max_num_triplets=(5 * n_cells), num_rows=n_cells, num_cols=n_cells, dtype=ti.f32)
         b = ti.ndarray(ti.f32, shape=n_cells)
         self.fill_pressure_system(A, b)

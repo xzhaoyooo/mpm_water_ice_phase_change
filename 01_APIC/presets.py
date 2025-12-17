@@ -55,7 +55,7 @@ configuration_list = [
             Rectangle(
                 material=Water,  # pyright: ignore
                 lower_left=(0.47, 0.9),
-                velocity=(0, -2),
+                velocity=(0, -1),
                 size=(0.06, 0.06),
                 frame_threshold=i,
             )
