@@ -25,12 +25,16 @@ class Configuration:
         self.boundary_temperature = boundary_temperature
 
         self.initial_geometries = []
-        self.subsequent_geometries = []
+        self.discrete_geometries = []
+        self.continuous_geometries = []
         for geometry in geometries:
             if geometry.frame_threshold == 0:
                 self.initial_geometries.append(geometry)
+            elif geometry.is_continuous:
+                self.continuous_geometries.append(geometry)
             else:
-                self.subsequent_geometries.append(geometry)
+                self.discrete_geometries.append(geometry)
 
         # Sort this by frame_threshold, so only the first element has to be checked against.
-        self.subsequent_geometries.sort(key=(lambda g: g.frame_threshold))
+        self.continuous_geometries.sort(key=(lambda g: g.frame_threshold))
+        self.discrete_geometries.sort(key=(lambda g: g.frame_threshold))

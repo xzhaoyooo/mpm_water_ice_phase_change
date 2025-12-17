@@ -1,4 +1,4 @@
-from _common.configurations import Configuration
+from _common.configurations import Configuration, Geometry
 from _common.samplers import PoissonDiskSampler
 from _common.solvers import CollocatedSolver
 
@@ -76,20 +76,27 @@ class BaseSimulation:
     def run(self) -> None:
         pass
 
-    def has_loadable_geometry(self):
-        if len(self.subsequent_geometries) <= 0:
+    def has_loadable_geometry(self, geometries: list[Geometry]):
+        if len(geometries) <= 0:
             return False
 
-        return self.current_frame == self.subsequent_geometries[0].frame_threshold
+        return self.current_frame == geometries[0].frame_threshold
 
     def substep(self) -> None:
         self.current_frame += 1
 
-        # Load all remaining geometries with a satisfied frame threshold:
-        while self.has_loadable_geometry():
-            self.sampler.add_geometry(self.subsequent_geometries.pop(0))
+        # Discrete geometries will be added once per iteration:
+        while self.has_loadable_geometry(self.discrete_geometries):
+            self.sampler.add_geometry(self.discrete_geometries.pop(0))
+
+        # Continuous geometries will be added once per substep:
+        loadable_geometries = []
+        while self.has_loadable_geometry(self.continuous_geometries):
+            loadable_geometries.append(self.continuous_geometries.pop(0))
 
         for _ in range(math.ceil((1 / (self.fps * self.solver.dt[None])))):
+            for geometry in loadable_geometries:
+                self.sampler.add_geometry(geometry)
             self.solver.substep()
 
     def dump_frames(self) -> None:
@@ -131,7 +138,8 @@ class BaseSimulation:
         self.current_frame = 0
 
         # We copy this, so we can pop from this list and check the length:
-        self.subsequent_geometries = self.configuration.subsequent_geometries.copy()
+        self.discrete_geometries = self.configuration.discrete_geometries.copy()
+        self.continuous_geometries = self.configuration.continuous_geometries.copy()
 
         # Load all the initial geometries into the solver:
         for geometry in self.configuration.initial_geometries:

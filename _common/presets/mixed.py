@@ -127,6 +127,7 @@ mixed_presets = [
         geometries=[
             *[
                 Circle(
+                    is_continuous=True,
                     material=Water,  # pyright: ignore
                     center=(0.04, 0.96),
                     temperature=80.0,
@@ -186,15 +187,15 @@ mixed_presets = [
         information="Water, Snow -> Water",
         geometries=[
             *[
-                Rectangle(
-                    lower_left=(0.47, 0.9),
+                Circle(
                     material=Water,  # pyright: ignore
-                    temperature=20.0,
-                    velocity=(0, -3),
-                    size=(0.06, 0.06),
+                    is_continuous=True,
                     frame_threshold=i,
+                    center=(0.5, 0.8),
+                    velocity=(0, -1),
+                    radius=0.03,
                 )
-                for i in range(200)
+                for i in range(1, 200)
             ],
             *[
                 Circle(
@@ -202,8 +203,9 @@ mixed_presets = [
                     center=(0.25, 0.4 + (i * 0.05)),
                     radius=0.05,
                     temperature=20.0,
-                    frame_threshold=(i + 1) * 50,
-                    material=Snow,  # pyright: ignore
+                    frame_threshold=(i + 1) * 25,
+                    # TODO: should be snow, but this isnt' supported rn
+                    material=Ice,  # pyright: ignore
                 )
                 for i in range(3)
             ],

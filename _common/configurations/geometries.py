@@ -13,8 +13,8 @@ class Geometry(ABC):
         frame_threshold: int,
         temperature: float,
         material: Material,
+        is_continuous: bool = False,
     ) -> None:
-        self.material = material
         self.conductivity = material.Conductivity
         self.latent_heat = material.LatentHeat
         self.capacity = material.Capacity
@@ -24,8 +24,10 @@ class Geometry(ABC):
         self.phase = material.Phase
         self.mu_0 = material.Mu
         self.frame_threshold = frame_threshold
+        self.is_continuous = is_continuous
         self.temperature = temperature
         self.velocity = list(velocity)
+        self.material = material
 
     @abstractmethod
     def in_bounds(self, x: float, y: float) -> bool:
@@ -45,8 +47,9 @@ class Circle(Geometry):
         radius: float,
         temperature: float = 0.0,
         frame_threshold: int = 0,
+        is_continuous: bool = False,
     ) -> None:
-        super().__init__(velocity, frame_threshold, temperature, material)
+        super().__init__(velocity, frame_threshold, temperature, material, is_continuous)
         self.x, self.y = list(center)
         self.squared_radius = radius * radius
         self.radius = radius
@@ -73,8 +76,9 @@ class Rectangle(Geometry):
         material: Material,
         temperature: float = 0.0,
         frame_threshold: int = 0,
+        is_continuous: bool = False,
     ) -> None:
-        super().__init__(velocity, frame_threshold, temperature, material)
+        super().__init__(velocity, frame_threshold, temperature, material, is_continuous)
         self.width, self.height = size
         self.x, self.y = lower_left
         self.r_bound = self.x + self.width

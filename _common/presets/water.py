@@ -5,14 +5,15 @@ water_presets = [
     Configuration(
         name="Waterjet",
         information="Water",
-        dt = 1e-3,
+        dt=1e-3,
         geometries=[
-            Rectangle(
+            Circle(
                 material=Water,  # pyright: ignore
-                lower_left=(0.47, 0.8),
-                velocity=(0, -1),
-                size=(0.06, 0.06),
+                is_continuous=True,
                 frame_threshold=i,
+                center=(0.5, 0.8),
+                velocity=(0, -1),
+                radius=0.03,
             )
             for i in range(1, 200)
         ],
@@ -20,7 +21,7 @@ water_presets = [
     Configuration(
         name="Waterjet & Pool",
         information="Water",
-        dt = 1e-3,
+        dt=1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -29,12 +30,13 @@ water_presets = [
                 velocity=(0, 0),
             ),
             *[
-                Rectangle(
-                    lower_left=(0.47, 0.8),
+                Circle(
                     material=Water,  # pyright: ignore
-                    velocity=(0, -2),
-                    size=(0.06, 0.06),
+                    is_continuous=True,
                     frame_threshold=i,
+                    center=(0.5, 0.8),
+                    velocity=(0, -1),
+                    radius=0.03,
                 )
                 for i in range(1, 200)
             ],
@@ -43,7 +45,7 @@ water_presets = [
     Configuration(
         name="Dam Break",
         information="Water",
-        dt = 1e-3,
+        dt=1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -56,7 +58,7 @@ water_presets = [
     Configuration(
         name="Dam Break, Centered",
         information="Water",
-        dt = 1e-3,
+        dt=1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -69,7 +71,7 @@ water_presets = [
     Configuration(
         name="Spherefall, Water",
         information="Water",
-        dt = 1e-3,
+        dt=1e-3,
         geometries=[
             Circle(
                 material=Water,  # pyright: ignore
@@ -82,7 +84,7 @@ water_presets = [
     Configuration(
         name="Pool",
         information="Water",
-        dt = 1e-3,
+        dt=1e-3,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
