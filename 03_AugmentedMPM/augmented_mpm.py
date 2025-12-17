@@ -1,13 +1,13 @@
 from _common.constants import Classification, State, Water, Ice, Simulation
-from solvers import PressureSolver, HeatSolver
-from _common.solvers import BaseSolver
+from _common.solvers import PressureSolver, HeatSolver
+from _common.solvers import StaggeredSolver
 from typing import override
 
 import taichi as ti
 
 
 @ti.data_oriented
-class AugmentedMPM(BaseSolver):
+class AugmentedMPM(StaggeredSolver):
     def __init__(self, max_particles: int, n_grid: int, vol_0: float):
         super().__init__(max_particles, n_grid, vol_0)
 
@@ -16,12 +16,6 @@ class AugmentedMPM(BaseSolver):
         self.classification_y = ti.field(dtype=ti.i32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
         self.conductivity_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
         self.conductivity_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
-        self.velocity_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
-        self.velocity_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
-        self.volume_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
-        self.volume_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
-        self.mass_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
-        self.mass_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
 
         # Properties on MAC-cells.
         self.inv_lambda_c = ti.field(dtype=ti.f64, shape=(self.w_grid, self.w_grid), offset=self.w_offset)
@@ -55,6 +49,20 @@ class AugmentedMPM(BaseSolver):
 
         # Set the initial boundary:
         self.initialize_boundary()
+
+    @ti.func
+    @override
+    def left_hand_offset(self, i: ti.i32, j: ti.i32) -> ti.f32: # pyright: ignore
+        # NOTE: lambda_c approaches infinity for incompressible materials, this way we end up with the
+        #       usual pressure equation for cells where a lot of incompressible material has accumulated.
+        return (self.JP_c[i, j] / (self.dt[None] * self.JE_c[i, j])) * self.inv_lambda_c[i, j]
+
+    @ti.func
+    @override
+    def right_hand_offset(self, i: ti.i32, j: ti.i32) -> ti.f32: # pyright: ignore
+        # NOTE: JE_c approaches 1 for incompressible materials, this way we end up with the usual
+        #       pressure equation for cells where a lot of incompressible material has accumulated.
+        return (1 - self.JE_c[i, j]) / (self.dt[None] * self.JE_c[i, j])
 
     @ti.func
     @override

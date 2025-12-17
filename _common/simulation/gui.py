@@ -2,7 +2,7 @@ from _common.samplers import BasePoissonDiskSampler
 from _common.configurations import Configuration
 from _common.simulation import BaseSimulation
 from _common.constants import ColorHEX
-from _common.solvers import BaseSolver
+from _common.solvers import CollocatedSolver
 
 from abc import abstractmethod
 
@@ -15,7 +15,7 @@ class GUI_Simulation(BaseSimulation):
         self,
         configurations: list[Configuration],
         sampler: BasePoissonDiskSampler,
-        solver: BaseSolver,
+        solver: CollocatedSolver,
         prefix: str,
         name: str,
         res: int,

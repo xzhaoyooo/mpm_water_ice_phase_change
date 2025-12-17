@@ -5,8 +5,8 @@ sys.path.append(os.path.dirname(tests_dir))
 
 from _common.samplers import BasePoissonDiskSampler
 from _common.simulation import GGUI_Simulation, GUI_Simulation
+from augmented_mpm import AugmentedMPM
 from presets import configuration_list
-from solvers import AugmentedMPM
 from parsing import arguments
 
 import taichi as ti

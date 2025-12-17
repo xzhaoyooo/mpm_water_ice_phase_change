@@ -1,4 +1,4 @@
-from _common.solvers import BaseSolver
+from _common.solvers import CollocatedSolver
 from _common.constants import State
 from abc import ABC
 
@@ -10,7 +10,7 @@ import taichi as ti
 class BasePoissonDiskSampler(ABC):
     def __init__(
         self,
-        solver: BaseSolver,
+        solver: CollocatedSolver,
         r: float = 0.002,
         k: int = 30,
     ) -> None:

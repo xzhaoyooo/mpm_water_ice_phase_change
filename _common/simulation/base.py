@@ -1,6 +1,6 @@
 from _common.configurations import Configuration
 from _common.samplers import BasePoissonDiskSampler
-from _common.solvers import BaseSolver
+from _common.solvers import CollocatedSolver
 
 from abc import abstractmethod
 from datetime import datetime
@@ -15,7 +15,7 @@ class BaseSimulation:
         self,
         configurations: list[Configuration],
         sampler: BasePoissonDiskSampler,
-        solver: BaseSolver,
+        solver: CollocatedSolver,
         prefix: str,
         name: str,
         initial_configuration: int = 0,

@@ -1,4 +1,4 @@
-from _common.solvers import BaseSolver
+from _common.solvers import CollocatedSolver
 from _common.constants import State
 
 from typing import override
@@ -7,7 +7,7 @@ import taichi as ti
 
 
 @ti.data_oriented
-class MPM(BaseSolver):
+class MPM(CollocatedSolver):
     def __init__(self, max_particles: int, n_grid: int, vol_0: float):
         super().__init__(max_particles, n_grid, vol_0)
 

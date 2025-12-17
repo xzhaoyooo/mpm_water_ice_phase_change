@@ -1,34 +1,32 @@
 from taichi.linalg import SparseMatrixBuilder, SparseSolver, SparseCG
-from parsing import should_use_direct_solver
+# from parsing import should_use_direct_solver
 
 import taichi as ti
 
 
 @ti.data_oriented
 class HeatSolver:
-    def __init__(self, mpm_solver) -> None:
-        self.n_cells = mpm_solver.n_grid * mpm_solver.n_grid
-        self.n_grid = mpm_solver.n_grid
-        self.mpm_solver = mpm_solver
-        self.inv_dx = mpm_solver.inv_dx
-        self.dt = mpm_solver.dt
+    def __init__(self, solver) -> None:
+        self.w_cells = solver.w_grid * solver.w_grid
+        self.w_grid = solver.w_grid
+        self.mpm_solver = solver
+        self.inv_dx = solver.inv_dx
+        self.dt = solver.dt
 
-        self.classification_c = mpm_solver.classification_c
-        self.temperature_c = mpm_solver.temperature_c
-        self.capacity_c = mpm_solver.capacity_c
-        self.mass_c = mpm_solver.mass_c
+        self.classification_c = solver.classification_c
+        self.temperature_c = solver.temperature_c
+        self.capacity_c = solver.capacity_c
+        self.mass_c = solver.mass_c
 
-        self.classification_x = mpm_solver.classification_x
-        self.classification_y = mpm_solver.classification_y
-        self.conductivity_x = mpm_solver.conductivity_x
-        self.conductivity_y = mpm_solver.conductivity_y
-
-        self.should_use_direct_solver = should_use_direct_solver
+        self.classification_x = solver.classification_x
+        self.classification_y = solver.classification_y
+        self.conductivity_x = solver.conductivity_x
+        self.conductivity_y = solver.conductivity_y
 
     @ti.kernel
     def fill_linear_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
-        for i, j in ti.ndrange(self.n_grid, self.n_grid):
-            idx = (i * self.n_grid) + j  # raveled index
+        for i, j in ti.ndrange(self.w_grid, self.w_grid):
+            idx = (i * self.w_grid) + j  # raveled index
             b[idx] = self.temperature_c[i, j]  # right-hand side
 
             # We enforce Dirichlet temperature boundary conditions at CELLS that are in contact with fixed
@@ -50,13 +48,13 @@ class HeatSolver:
             if not self.mpm_solver.is_insulated(i + 1, j):  # homogeneous Neumann
                 diagonal += dt_inv_mass_capacity * self.conductivity_x[i + 1, j]
                 if self.mpm_solver.is_empty(i + 1, j):  # non-homogeneous Dirichlet
-                    A[idx, idx + self.n_grid] -= dt_inv_mass_capacity * self.conductivity_x[i + 1, j]
+                    A[idx, idx + self.w_grid] -= dt_inv_mass_capacity * self.conductivity_x[i + 1, j]
                     b[idx] += inv_dx_sqrd * self.conductivity_x[i + 1, j] * self.temperature_c[i + 1, j]
 
             if not self.mpm_solver.is_insulated(i - 1, j):  # homogeneous Neumann
                 diagonal += dt_inv_mass_capacity * self.conductivity_x[i, j]
                 if self.mpm_solver.is_empty(i - 1, j):  # non-homogeneous Dirichlet
-                    A[idx, idx - self.n_grid] -= dt_inv_mass_capacity * self.conductivity_x[i, j]
+                    A[idx, idx - self.w_grid] -= dt_inv_mass_capacity * self.conductivity_x[i, j]
                     b[idx] += inv_dx_sqrd * self.conductivity_x[i, j] * self.temperature_c[i - 1, j]
 
             if not self.mpm_solver.is_insulated(i, j + 1):  # homogeneous Neumann
@@ -75,22 +73,24 @@ class HeatSolver:
 
     @ti.kernel
     def fill_temperature_field(self, T: ti.types.ndarray()):  # pyright: ignore
-        for i, j in ti.ndrange(self.n_grid, self.n_grid):
-            self.temperature_c[i, j] = T[(i * self.n_grid) + j]
+        for i, j in ti.ndrange(self.w_grid, self.w_grid):
+            self.temperature_c[i, j] = T[(i * self.w_grid) + j]
 
     def solve(self):
         # TODO: max_num_triplets could be optimized to N * 5?
         A = SparseMatrixBuilder(
-            max_num_triplets=(5 * self.n_cells),
-            num_rows=self.n_cells,
-            num_cols=self.n_cells,
+            max_num_triplets=(5 * self.w_cells),
+            num_rows=self.w_cells,
+            num_cols=self.w_cells,
             dtype=ti.f32,
         )
-        b = ti.ndarray(ti.f32, shape=self.n_cells)
+        b = ti.ndarray(ti.f32, shape=self.w_cells)
         self.fill_linear_system(A, b)
 
         # Solve the linear system.
-        if self.should_use_direct_solver:
+        # TODO: create a base parsing file, move this there
+        should_use_direct_solver = False
+        if should_use_direct_solver:
             solver = SparseSolver(dtype=ti.f32, solver_type="LLT")
             solver.compute(A.build())
             T = solver.solve(b)

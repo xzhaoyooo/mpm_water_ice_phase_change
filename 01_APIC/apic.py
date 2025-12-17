@@ -1,23 +1,13 @@
+from _common.solvers import StaggeredSolver, PressureSolver
 from _common.constants import State, Classification
-from _common.solvers import BaseSolver
-
-from taichi.linalg import SparseMatrixBuilder, SparseCG
 
 import taichi as ti
 
 
 @ti.data_oriented
-class APIC(BaseSolver):
+class APIC(StaggeredSolver):
     def __init__(self, max_particles: int, n_grid: int, vol_0: float):
         super().__init__(max_particles, n_grid, vol_0)
-
-        # Properties on MAC-faces:
-        self.velocity_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
-        self.velocity_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
-        self.volume_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
-        self.volume_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
-        self.mass_x = ti.field(dtype=ti.f32, shape=(self.w_grid + 1, self.w_grid), offset=self.w_offset)
-        self.mass_y = ti.field(dtype=ti.f32, shape=(self.w_grid, self.w_grid + 1), offset=self.w_offset)
 
         # Properties on particles:
         self.cx_p = ti.Vector.field(2, dtype=ti.f32, shape=max_particles)
@@ -29,22 +19,8 @@ class APIC(BaseSolver):
         self.dist_offset_x = ti.Vector([0.0, 0.5])
         self.dist_offset_y = ti.Vector([0.5, 0.0])
 
-    @ti.kernel
-    def classify_cells(self):
-        for i, j in self.classification_c:
-            # Reset all the cells that don't belong to the colliding boundary:
-            if not self.is_colliding(i, j):
-                self.classification_c[i, j] = Classification.Empty
-
-        for p in self.velocity_p:
-            # We ignore uninitialized particles:
-            if self.state_p[p] == State.Hidden:
-                continue
-
-            # Find the nearest cell and set it to interior:
-            i, j = ti.floor(self.position_p[p] * self.inv_dx, dtype=ti.i32)  # pyright: ignore
-            if not self.is_colliding(i, j):  # pyright: ignore
-                self.classification_c[i, j] = Classification.Interior
+        # Poisson solvers for pressure and heat.
+        self.pressure_solver = PressureSolver(self)
 
     @ti.kernel
     def reset_grids(self):
@@ -92,6 +68,23 @@ class APIC(BaseSolver):
                 self.velocity_y[base_y + offset] += weight_y * velocity_y
 
     @ti.kernel
+    def classify_cells(self):
+        for i, j in self.classification_c:
+            # Reset all the cells that don't belong to the colliding boundary:
+            if not self.is_colliding(i, j):
+                self.classification_c[i, j] = Classification.Empty
+
+        for p in self.velocity_p:
+            # We ignore uninitialized particles:
+            if self.state_p[p] == State.Hidden:
+                continue
+
+            # Find the nearest cell and set it to interior:
+            i, j = ti.floor(self.position_p[p] * self.inv_dx, dtype=ti.i32)  # pyright: ignore
+            if not self.is_colliding(i, j):  # pyright: ignore
+                self.classification_c[i, j] = Classification.Interior
+
+    @ti.kernel
     def momentum_to_velocity(self):
         for i, j in self.velocity_x:
             if (mass := self.mass_x[i, j]) > 0:
@@ -120,85 +113,6 @@ class APIC(BaseSolver):
                 self.volume_x[i, j] += control_volume
                 self.volume_y[i, j + 1] += control_volume
                 self.volume_y[i, j] += control_volume
-
-    @ti.kernel
-    def fill_pressure_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
-        dt_inv_dx_sqrd = self.dt[None] * self.inv_dx * self.inv_dx
-        for i, j in ti.ndrange(self.w_grid, self.w_grid):
-            diagonal = 0.0  # to keep max_num_triplets as low as possible
-            idx = (i * self.w_grid) + j  # raveled index
-
-            if not self.is_interior(i, j):  # homogeneous Dirichlet
-                A[idx, idx] += 1.0
-                b[idx] = 0.0
-                continue
-
-            # We will apply a Neumann boundary condition on the colliding faces,
-            # to guarantee zero flux into colliding cells, by just not adding these
-            # face values in the Laplacian for the off-diagonal values.
-            # NOTE: we can use the raveled index to quickly access adjacent cells with:
-            # idx(i, j) = (i * n) + j
-            #   => idx(i - 1, j) = ((i - 1) * n) + j = (i * n) + j - n = idx(i, j) - n
-            #   => idx(i, j - 1) = (i * n) + j - 1 = idx(i, j) - 1, etc.
-            if not self.is_colliding(i + 1, j):  # homogeneous Neumann
-                inv_rho = self.volume_x[i + 1, j] / self.mass_x[i + 1, j]
-                b[idx] += self.inv_dx * self.velocity_x[i + 1, j]
-                diagonal += dt_inv_dx_sqrd * inv_rho
-                if not self.is_empty(i + 1, j):  # homogeneous Dirichlet
-                    A[idx, idx + self.w_grid] -= dt_inv_dx_sqrd * inv_rho
-
-            if not self.is_colliding(i - 1, j):  # homogeneous Neumann
-                inv_rho = self.volume_x[i, j] / self.mass_x[i, j]
-                b[idx] -= self.inv_dx * self.velocity_x[i, j]
-                diagonal += dt_inv_dx_sqrd * inv_rho
-                if not self.is_empty(i - 1, j):  # homogeneous Dirichlet
-                    A[idx, idx - self.w_grid] -= dt_inv_dx_sqrd * inv_rho
-
-            if not self.is_colliding(i, j + 1):  # homogeneous Neumann
-                inv_rho = self.volume_y[i, j + 1] / self.mass_y[i, j + 1]
-                b[idx] += self.inv_dx * self.velocity_y[i, j + 1]
-                diagonal += dt_inv_dx_sqrd * inv_rho
-                if not self.is_empty(i, j + 1):  # homogeneous Dirichlet
-                    A[idx, idx + 1] -= dt_inv_dx_sqrd * inv_rho
-
-            if not self.is_colliding(i, j - 1):  # homogeneous Neumann
-                inv_rho = self.volume_y[i, j] / self.mass_y[i, j]
-                b[idx] -= self.inv_dx * self.velocity_y[i, j]
-                diagonal += dt_inv_dx_sqrd * inv_rho
-                if not self.is_empty(i, j - 1):  # homogeneous Dirichlet
-                    A[idx, idx - 1] -= dt_inv_dx_sqrd * inv_rho
-
-            A[idx, idx] += diagonal
-
-    @ti.kernel
-    def apply_pressure(self, pressure: ti.types.ndarray()):  # pyright: ignore
-        coefficient = self.dt[None] * self.inv_dx
-        for i, j in ti.ndrange(self.w_grid, self.w_grid):
-            idx = i * self.w_grid + j
-            if self.is_interior(i - 1, j) or self.is_interior(i, j):
-                if not (self.is_colliding(i - 1, j) or self.is_colliding(i, j)):
-                    pressure_gradient = pressure[idx] - pressure[idx - self.w_grid]
-                    inv_rho = self.volume_x[i, j] / self.mass_x[i, j]
-                    self.velocity_x[i, j] += inv_rho * coefficient * pressure_gradient
-                else:
-                    self.velocity_x[i, j] = 0
-            if self.is_interior(i, j - 1) or self.is_interior(i, j):
-                if not (self.is_colliding(i, j - 1) or self.is_colliding(i, j)):
-                    pressure_gradient = pressure[idx] - pressure[idx - 1]
-                    inv_rho = self.volume_y[i, j] / self.mass_y[i, j]
-                    self.velocity_y[i, j] += inv_rho * coefficient * pressure_gradient
-                else:
-                    self.velocity_y[i, j] = 0
-
-    def correct_pressure(self):
-        n_cells = self.w_grid * self.w_grid
-        A = SparseMatrixBuilder(max_num_triplets=(5 * n_cells), num_rows=n_cells, num_cols=n_cells, dtype=ti.f32)
-        b = ti.ndarray(ti.f32, shape=n_cells)
-        self.fill_pressure_system(A, b)
-
-        # Solve the linear system, apply the resulting pressure:
-        solver = SparseCG(A.build(), b, atol=1e-5, max_iter=500)
-        self.apply_pressure(solver.solve()[0])
 
     @ti.kernel
     def grid_to_particle(self):
@@ -261,5 +175,5 @@ class APIC(BaseSolver):
         self.classify_cells()
         self.momentum_to_velocity()
         self.compute_volumes()
-        self.correct_pressure()
+        self.pressure_solver.solve()
         self.grid_to_particle()

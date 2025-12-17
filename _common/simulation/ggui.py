@@ -2,7 +2,7 @@ from _common.constants import ColorRGB, State, Simulation
 from _common.configurations import Configuration
 from _common.samplers import BasePoissonDiskSampler
 from _common.simulation import BaseSimulation
-from _common.solvers import BaseSolver
+from _common.solvers import CollocatedSolver
 
 from typing import Callable
 
@@ -27,7 +27,7 @@ class GGUI_Simulation(BaseSimulation):
         configurations: list[Configuration],
         sampler: BasePoissonDiskSampler,
         res: tuple[int, int],
-        solver: BaseSolver,
+        solver: CollocatedSolver,
         prefix: str,
         name: str,
         initial_configuration: int = 0,

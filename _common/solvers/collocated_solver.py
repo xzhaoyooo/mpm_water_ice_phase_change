@@ -6,7 +6,7 @@ import taichi as ti
 
 
 @ti.data_oriented
-class BaseSolver(ABC):
+class CollocatedSolver(ABC):
     def __init__(self, max_particles: int, n_grid: int, vol_0: float):
         self.max_particles = max_particles
         self.inv_dx = float(n_grid)
