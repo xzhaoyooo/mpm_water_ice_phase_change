@@ -1,4 +1,4 @@
-from _common.constants import Classification, State, Water, Ice, Simulation
+from _common.constants import Classification, State, Water, Ice, Simulation, Material
 from _common.solvers import PressureSolver, HeatSolver
 from _common.solvers import StaggeredSolver
 from typing import override
@@ -34,9 +34,7 @@ class AugmentedMPM(StaggeredSolver):
         self.FE_p = ti.Matrix.field(2, 2, dtype=ti.f32, shape=max_particles)
         self.JE_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.JP_p = ti.field(dtype=ti.f32, shape=max_particles)
-        self.nu_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.mu_p = ti.field(dtype=ti.f32, shape=max_particles)
-        self.E_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.J_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.C_p = ti.Matrix.field(2, 2, dtype=ti.f32, shape=max_particles)
 
@@ -52,14 +50,14 @@ class AugmentedMPM(StaggeredSolver):
 
     @ti.func
     @override
-    def left_hand_offset(self, i: ti.i32, j: ti.i32) -> ti.f32: # pyright: ignore
+    def left_hand_offset(self, i: ti.i32, j: ti.i32) -> ti.f32:  # pyright: ignore
         # NOTE: lambda_c approaches infinity for incompressible materials, this way we end up with the
         #       usual pressure equation for cells where a lot of incompressible material has accumulated.
         return (self.JP_c[i, j] / (self.dt[None] * self.JE_c[i, j])) * self.inv_lambda_c[i, j]
 
     @ti.func
     @override
-    def right_hand_offset(self, i: ti.i32, j: ti.i32) -> ti.f32: # pyright: ignore
+    def right_hand_offset(self, i: ti.i32, j: ti.i32) -> ti.f32:  # pyright: ignore
         # NOTE: JE_c approaches 1 for incompressible materials, this way we end up with the usual
         #       pressure equation for cells where a lot of incompressible material has accumulated.
         return (1 - self.JE_c[i, j]) / (self.dt[None] * self.JE_c[i, j])
@@ -67,30 +65,30 @@ class AugmentedMPM(StaggeredSolver):
     @ti.func
     @override
     def add_particle(self, index: ti.i32, position: ti.template(), geometry: ti.template()):  # pyright: ignore
-        # Seed from the geometry and given position:
-        self.conductivity_p[index] = geometry.conductivity
-        self.theta_c_p[index] = geometry.material.Theta_c
-        self.theta_s_p[index] = geometry.material.Theta_s
-        self.latent_heat_p[index] = geometry.latent_heat
-        self.temperature_p[index] = geometry.temperature
-        self.lambda_p[index] = geometry.material.Lambda
-        self.zeta_p[index] = geometry.material.Zeta
-        self.capacity_p[index] = geometry.capacity
+        self.change_particle_material(index, geometry.material)
         self.velocity_p[index] = geometry.velocity
-        self.mu_p[index] = geometry.material.Mu
-        self.nu_p[index] = geometry.material.nu
-        self.E_p[index] = geometry.material.E
-        self.color_p[index] = geometry.color
-        self.phase_p[index] = geometry.phase
         self.position_p[index] = position
-
-        # Set properties to default values:
-        self.mass_p[index] = self.vol_0_p * geometry.density
-        self.FE_p[index] = ti.Matrix([[1, 0], [0, 1]])
-        self.C_p[index] = ti.Matrix.zero(float, 2, 2)
         self.state_p[index] = State.Active
-        self.JE_p[index] = 1.0
-        self.JP_p[index] = 1.0
+        self.C_p[index] = ti.Matrix.zero(ti.f32, 2, 2)
+
+    @ti.func
+    def change_particle_material(self, p: ti.i32, material: ti.template()):  # pyright: ignore
+        self.conductivity_p[p] = material.Conductivity
+        self.latent_heat_p[p] = material.LatentHeat
+        self.temperature_p[p] = 0.0
+        self.capacity_p[p] = material.Capacity
+        self.theta_c_p[p] = material.Theta_c
+        self.theta_s_p[p] = material.Theta_s
+        self.lambda_p[p] = material.Lambda
+        self.color_p[p] = material.Color
+        self.phase_p[p] = material.Phase
+        self.mass_p[p] = self.vol_0_p * material.Density
+        self.zeta_p[p] = material.Zeta
+        self.mu_p[p] = material.Mu
+        self.FE_p[p] = ti.Matrix.identity(ti.f32, 2)
+        self.JP_p[p] = 1.0
+        self.JE_p[p] = 1.0
+        self.J_p[p] = 1.0  # TODO: J_p is currently unused
 
     @ti.kernel
     def reset_grids(self):
@@ -430,18 +428,6 @@ class AugmentedMPM(StaggeredSolver):
             self.position_p[p] += self.dt[None] * next_velocity
             self.velocity_p[p] = next_velocity
 
-            # DONE: set temperature for empty cells
-            # DONE: set temperature for particles, ideally per geometry
-            # DONE: set heat capacity per particle depending on phase
-            # DONE: set heat conductivity per particle depending on phase
-            # DONE: set particle mass per phase
-            # DONE: set E and nu for each particle depending on phase
-            # DONE: apply latent heat
-            # TODO: move this to a ti.func? (or keep this here but assign values in func and use when adding particles)
-            # TODO: set theta_c, theta_s per phase? Water probably wants very small values, ice depends on temperature
-            # TODO: in theory all of the constitutive parameters must be functions of temperature
-            #       in the ice phase to range from solid ice to slushy ice?
-
             # Initially, we allow each particle to freely change its temperature according to the heat equation.
             # But whenever the freezing point is reached, any additional temperature change is multiplied by
             # conductivity and mass and added to the buffer, with the particle temperature kept unchanged.
@@ -453,18 +439,7 @@ class AugmentedMPM(StaggeredSolver):
                 # If the heat buffer is full the particle changes its phase to water,
                 # everything is then reset according to the new phase.
                 if self.latent_heat_p[p] >= Water.LatentHeat:
-                    self.conductivity_p[p] = Water.Conductivity
-                    self.latent_heat_p[p] = Water.LatentHeat
-                    self.temperature_p[p] = 0.0
-                    self.capacity_p[p] = Water.Capacity
-                    self.lambda_p[p] = Water.Lambda
-                    self.color_p[p] = Water.Color
-                    self.phase_p[p] = Water.Phase
-                    self.mass_p[p] = self.vol_0_p * Water.Density
-                    self.mu_p[p] = Water.Mu
-                    self.FE_p[p] = ti.Matrix.identity(ti.f32, 2)
-                    self.JP_p[p] = 1.0
-                    self.JE_p[p] = 1.0
+                    self.change_particle_material(p, Water)
 
             elif (self.phase_p[p] == Water.Phase) and (next_temperature < 0):
                 # Water particle reached the freezing point, additional temperature change is added to heat buffer.
@@ -474,18 +449,7 @@ class AugmentedMPM(StaggeredSolver):
                 # If the heat buffer is empty the particle changes its phase to ice,
                 # everything is then reset according to the new phase.
                 if self.latent_heat_p[p] <= Ice.LatentHeat:
-                    self.conductivity_p[p] = Ice.Conductivity
-                    self.latent_heat_p[p] = Ice.LatentHeat
-                    self.temperature_p[p] = 0.0
-                    self.capacity_p[p] = Ice.Capacity
-                    self.lambda_p[p] = Ice.Lambda
-                    self.color_p[p] = Ice.Color
-                    self.phase_p[p] = Ice.Phase
-                    self.mass_p[p] = self.vol_0_p * Ice.Density
-                    self.mu_p[p] = Ice.Mu
-                    self.FE_p[p] = ti.Matrix.identity(ti.f32, 2)
-                    self.JP_p[p] = 1.0
-                    self.JE_p[p] = 1.0
+                    self.change_particle_material(p, Ice)
 
             else:
                 # Freely change temperature according to heat equation, but clamp for safety reasons.

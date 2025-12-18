@@ -17,8 +17,6 @@ class MPM(CollocatedSolver):
         self.lambda_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.mu_0_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.zeta_p = ti.field(dtype=ti.i32, shape=max_particles)
-        self.nu_p = ti.field(dtype=ti.f32, shape=max_particles)
-        self.E_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.FE_p = ti.Matrix.field(2, 2, dtype=ti.f32, shape=max_particles)
         self.JE_p = ti.field(dtype=ti.f32, shape=max_particles)
         self.JP_p = ti.field(dtype=ti.f32, shape=max_particles)
@@ -36,8 +34,6 @@ class MPM(CollocatedSolver):
         self.zeta_p[index] = geometry.material.Zeta
         self.velocity_p[index] = geometry.velocity
         self.mu_0_p[index] = geometry.material.Mu
-        self.nu_p[index] = geometry.material.nu
-        self.E_p[index] = geometry.material.E
         self.phase_p[index] = geometry.phase
         self.position_p[index] = position
 
