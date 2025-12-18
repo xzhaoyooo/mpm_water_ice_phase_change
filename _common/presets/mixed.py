@@ -198,16 +198,26 @@ mixed_presets = [
                 for i in range(1, 200)
             ],
             *[
-                Circle(
-                    velocity=(5, 0),
-                    center=(0.25, 0.4 + (i * 0.05)),
-                    radius=0.05,
-                    temperature=20.0,
-                    frame_threshold=(i + 1) * 25,
-                    # TODO: should be snow, but this isnt' supported rn
-                    material=Ice,  # pyright: ignore
+                Rectangle(
+                    material=Water,  # pyright: ignore
+                    is_continuous=True,
+                    frame_threshold=i,
+                    lower_left=(0.47, 0.94),
+                    velocity=(0, -2),
+                    size=(0.06, 0.06),
                 )
-                for i in range(3)
+                for i in range(3, 203)
+            ],
+            *[
+                Circle(
+                    material=Water,  # pyright: ignore
+                    is_continuous=True,
+                    frame_threshold=i,
+                    center=(0.5, 0.94),
+                    velocity=(0, -2),
+                    radius=0.03,
+                )
+                for i in range(3, 203)
             ],
         ],
     ),

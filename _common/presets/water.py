@@ -7,15 +7,28 @@ water_presets = [
         information="Water",
         dt=1e-3,
         geometries=[
-            Circle(
-                material=Water,  # pyright: ignore
-                is_continuous=True,
-                frame_threshold=i,
-                center=(0.5, 0.8),
-                velocity=(0, -1),
-                radius=0.03,
-            )
-            for i in range(1, 200)
+            *[
+                Rectangle(
+                    material=Water,  # pyright: ignore
+                    is_continuous=True,
+                    frame_threshold=i,
+                    lower_left=(0.47, 0.94),
+                    velocity=(0, -2),
+                    size=(0.06, 0.06),
+                )
+                for i in range(3, 203)
+            ],
+            *[
+                Circle(
+                    material=Water,  # pyright: ignore
+                    is_continuous=True,
+                    frame_threshold=i,
+                    center=(0.5, 0.94),
+                    velocity=(0, -2),
+                    radius=0.03,
+                )
+                for i in range(3, 203)
+            ],
         ],
     ),
     Configuration(
@@ -30,15 +43,26 @@ water_presets = [
                 velocity=(0, 0),
             ),
             *[
+                Rectangle(
+                    material=Water,  # pyright: ignore
+                    is_continuous=True,
+                    frame_threshold=i,
+                    lower_left=(0.47, 0.94),
+                    velocity=(0, -2),
+                    size=(0.06, 0.06),
+                )
+                for i in range(3, 203)
+            ],
+            *[
                 Circle(
                     material=Water,  # pyright: ignore
                     is_continuous=True,
                     frame_threshold=i,
-                    center=(0.5, 0.8),
-                    velocity=(0, -1),
+                    center=(0.5, 0.94),
+                    velocity=(0, -2),
                     radius=0.03,
                 )
-                for i in range(1, 200)
+                for i in range(3, 203)
             ],
         ],
     ),
