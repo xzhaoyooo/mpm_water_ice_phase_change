@@ -1,1 +1,1 @@
-from _common.samplers.base_poisson_disk_sampler import PoissonDiskSampler
+from _common.samplers.poisson_disk_sampler import PoissonDiskSampler
