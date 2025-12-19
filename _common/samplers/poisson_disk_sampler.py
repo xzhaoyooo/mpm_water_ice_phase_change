@@ -31,9 +31,8 @@ class PoissonDiskSampler(ABC):
         self.background_grid = ti.field(dtype=ti.i32, shape=(w_grid, w_grid), offset=w_offset)
 
         # We can't use a resizable list, so we point to the head and tail:
-        # self._head = ti.field(int, shape=())
-        self._head = self.solver.n_particles
-        self._tail = ti.field(int, shape=())
+        self._head = ti.field(ti.i32, shape=())
+        self._tail = ti.field(ti.i32, shape=())
 
     @ti.func
     def _has_collision(self, base_point: ti.template()) -> bool:  # pyright: ignore
@@ -110,27 +109,26 @@ class PoissonDiskSampler(ABC):
         # Initialize background grid to the current positions:
         self._initialize_grid(self._head[None])
 
-        # Update tail, for a fresh sample this will be 1, in the running simulation
-        # this will reset this to where we left of, allowing to add more particles:
-        self._tail[None] = self._head[None] + 1
+        # Reset pointers, for a fresh sample this will be (1, 0), in the running simulation
+        # this will reset to where we left of, allowing to add more particles:
+        self._tail[None] = self.solver.n_particles[None] + 1
+        self._head[None] = self.solver.n_particles[None]
 
         # Find a good initial point for this sample run:
         initial_point = self._generate_initial_point(geometry)
         self.solver.add_particle(self._tail[None], initial_point, geometry)
+        self.solver.n_particles[None] += 1
         self._head[None] += 1
         self._tail[None] += 1
 
         while self._can_sample_more_points():
             prev_position = self.solver.position_p[self._head[None]]
             self._head[None] += 1  # Increment on each iteration
-            # TODO: this might create a lot of inactive particles
-            #       as _head and solver.n_particles are the same fields
-            #       -> this must be separated and _n_particles again
-
             for _ in range(self.k):
                 next_position = self._generate_point_around(prev_position)
                 next_index = self._point_to_index(next_position)
                 if self._point_fits(next_position, geometry):
                     self.background_grid[next_index] = self._tail[None]
                     self.solver.add_particle(self._tail[None], next_position, geometry)
+                    self.solver.n_particles[None] += 1
                     self._tail[None] += 1  # Increment when point is found
