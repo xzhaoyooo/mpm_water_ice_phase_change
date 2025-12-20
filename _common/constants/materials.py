@@ -37,7 +37,7 @@ class Water(Material):
 
 @dataclass
 class Ice(Material):
-    E = 5.8e5
+    E = 5.5e5
     nu = 0.1
     Conductivity = 2.33
     LatentHeat = 0.0
@@ -48,9 +48,9 @@ class Ice(Material):
     Phase = 86
     Mu = E / (2 * (1 + nu))
 
-    Zeta: int = 12
-    Theta_s: float = 7.5e-3
-    Theta_c: float = 2.5e-2
+    Zeta: int = 20
+    Theta_s: float = 0.05
+    Theta_c: float = 0.5
 
 
 @dataclass
