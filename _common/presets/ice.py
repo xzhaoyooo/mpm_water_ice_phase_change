@@ -11,9 +11,9 @@ ice_presets = [
             Circle(
                 material=Ice,  # pyright: ignore
                 center=(0.5, 0.4),
-                velocity=(0, -2),
+                velocity=(0, -3),
                 temperature=-100.0,
-                radius=0.08,
+                radius=0.1,
             ),
         ],
     ),

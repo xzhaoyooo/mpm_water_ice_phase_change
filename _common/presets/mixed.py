@@ -1,5 +1,5 @@
 from _common.configurations import Circle, Rectangle, Configuration
-from _common.constants import Ice, Water, Snow
+from _common.constants import Ice, Water
 
 mixed_presets = [
     Configuration(
@@ -66,9 +66,9 @@ mixed_presets = [
     ),
     Configuration(
         dt=1e-4,
-        name="Ice Cubes & Pool",
+        name="Pool & Ice Cubes",
         information="Water, Ice -> Water",
-        ambient_temperature=0.0,
+        ambient_temperature=30.0,
         geometries=[
             Rectangle(
                 material=Water,  # pyright: ignore
@@ -80,27 +80,27 @@ mixed_presets = [
             ),
             Rectangle(
                 material=Ice,  # pyright: ignore
-                size=(0.05, 0.05),
-                velocity=(0, -1),
+                size=(0.08, 0.08),
+                velocity=(0, -2),
                 lower_left=(0.25, 0.35),
                 frame_threshold=10,
-                temperature=-30.0,
+                temperature=-10.0,
             ),
             Rectangle(
                 material=Ice,  # pyright: ignore
-                size=(0.05, 0.05),
-                velocity=(0, -1),
+                size=(0.08, 0.08),
+                velocity=(0, -2),
                 lower_left=(0.45, 0.15),
-                frame_threshold=20,
-                temperature=-30.0,
+                frame_threshold=70,
+                temperature=-10.0,
             ),
             Rectangle(
                 material=Ice,  # pyright: ignore
-                size=(0.05, 0.05),
-                velocity=(0, -1),
+                size=(0.08, 0.08),
+                velocity=(0, -2),
                 lower_left=(0.65, 0.25),
-                frame_threshold=30,
-                temperature=-30.0,
+                frame_threshold=130,
+                temperature=-10.0,
             ),
         ],
     ),
@@ -123,14 +123,14 @@ mixed_presets = [
         dt=1e-4,
         name="Waterjet & Ice Cubes",
         information="Water, Ice -> Water",
-        ambient_temperature=5.0,
+        ambient_temperature=10.0,
         geometries=[
             *[
                 Circle(
                     is_continuous=True,
                     material=Water,  # pyright: ignore
                     center=(0.04, 0.96),
-                    temperature=80.0,
+                    temperature=100.0,
                     velocity=(4, -3),
                     radius=0.025,
                     frame_threshold=i,
@@ -140,42 +140,42 @@ mixed_presets = [
             Rectangle(  # BL
                 material=Ice,  # pyright: ignore
                 velocity=(0, 0),
-                lower_left=(0.6, 0.0),
+                lower_left=(0.495, 0.0),
                 size=(0.08, 0.08),
                 temperature=-10.0,
             ),
             Rectangle(  # BM
                 material=Ice,  # pyright: ignore
                 velocity=(0, 0),
-                lower_left=(0.69, 0.0),
+                lower_left=(0.585, 0.0),
                 size=(0.08, 0.08),
                 temperature=-10.0,
             ),
             Rectangle(  # BR
                 material=Ice,  # pyright: ignore
                 velocity=(0, 0),
-                lower_left=(0.78, 0.0),
+                lower_left=(0.675, 0.0),
                 size=(0.08, 0.08),
                 temperature=-10.0,
             ),
             Rectangle(  # ML
                 material=Ice,  # pyright: ignore
                 velocity=(0, 0),
-                lower_left=(0.645, 0.09),
+                lower_left=(0.5445, 0.09),
                 size=(0.08, 0.08),
                 temperature=-10.0,
             ),
             Rectangle(  # MR
                 material=Ice,  # pyright: ignore
                 velocity=(0, 0),
-                lower_left=(0.735, 0.09),
+                lower_left=(0.6345, 0.09),
                 size=(0.08, 0.08),
                 temperature=-10.0,
             ),
             Rectangle(  # TM
                 material=Ice,  # pyright: ignore
                 velocity=(0, 0),
-                lower_left=(0.69, 0.18),
+                lower_left=(0.585, 0.18),
                 size=(0.08, 0.08),
                 temperature=-10.0,
             ),
@@ -230,16 +230,16 @@ mixed_presets = [
             Circle(
                 material=Ice,  # pyright: ignore
                 center=(0.25, 0.4),
-                velocity=(0, -2),
+                velocity=(0, -3),
                 temperature=-100.0,
-                radius=0.08,
+                radius=0.1,
             ),
             Circle(
                 material=Water,  # pyright: ignore
                 center=(0.75, 0.4),
-                velocity=(0, -2),
+                velocity=(0, -3),
                 temperature=-100.0,
-                radius=0.08,
+                radius=0.1,
             ),
         ],
     ),

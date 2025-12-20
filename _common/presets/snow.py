@@ -11,9 +11,9 @@ snow_presets = [
             Circle(
                 material=Snow,  # pyright: ignore
                 temperature=-100.0,
-                velocity=(0, -2),
+                velocity=(0, -3),
                 center=(0.5, 0.4),
-                radius=0.08,
+                radius=0.1,
             ),
         ],
     ),
@@ -26,16 +26,16 @@ snow_presets = [
             Circle(
                 material=Ice,  # pyright: ignore
                 center=(0.25, 0.4),
-                velocity=(0, -2),
+                velocity=(0, -3),
                 temperature=-100.0,
-                radius=0.08,
+                radius=0.1,
             ),
             Circle(
                 material=Snow,  # pyright: ignore
                 center=(0.75, 0.4),
-                velocity=(0, -2),
+                velocity=(0, -3),
                 temperature=-100.0,
-                radius=0.08,
+                radius=0.1,
             ),
         ],
     ),
