@@ -21,11 +21,11 @@ def main():
 
     # Initialize Taichi on the chosen architecture:
     if arguments.arch.lower() == "cpu":
-        ti.init(arch=ti.cpu, debug=arguments.debug)
+        ti.init(arch=ti.cpu, debug=arguments.debug, verbose=arguments.verbose)
     elif arguments.arch.lower() == "gpu":
-        ti.init(arch=ti.gpu, debug=arguments.debug)
+        ti.init(arch=ti.gpu, debug=arguments.debug, verbose=arguments.verbose)
     else:
-        ti.init(arch=ti.cuda, debug=arguments.debug)
+        ti.init(arch=ti.cuda, debug=arguments.debug, verbose=arguments.verbose)
 
     initial_configuration = arguments.configuration % len(configurations)
     name = "Phase-field MPM, Water and Ice with Phase-change"

@@ -68,3 +68,12 @@ parser.add_argument(
     action="store_true",
     help=solver_type_help,
 )
+
+solver_type_help = "Turn on verbose logging."
+parser.add_argument(
+    "-v",
+    "--verbose",
+    default=False,
+    action="store_true",
+    help=solver_type_help,
+)
