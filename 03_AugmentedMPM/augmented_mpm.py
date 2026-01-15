@@ -317,7 +317,12 @@ class AugmentedMPM(StaggeredSolver):
             self.C_p[p] = ti.Matrix([[c_x[0], c_y[0]], [c_x[1], c_y[1]]])  # pyright: ignore
             self.position_p[p] += self.dt[None] * velocity
             self.velocity_p[p] = velocity
+            self.temperature_p[p] = temperature
 
+    @ti.kernel
+    def update_particle_phase(self):
+        for p in ti.ndrange(self.n_particles[None]):
+            temperature = self.temperature_p[p]
             # Initially, we allow each particle to freely change its temperature according to the heat equation.
             # But whenever the freezing point is reached, any additional temperature change is multiplied by
             # conductivity and mass and added to the buffer, with the particle temperature kept unchanged.
@@ -355,3 +360,6 @@ class AugmentedMPM(StaggeredSolver):
         self.pressure_solver.solve()
         self.heat_solver.solve()
         self.grid_to_particle()
+        self.update_particle_phase()
+
+        ti.profiler.print_scoped_profiler_info()

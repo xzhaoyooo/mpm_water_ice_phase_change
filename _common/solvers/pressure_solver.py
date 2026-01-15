@@ -9,6 +9,7 @@ class PressureSolver:
     def __init__(self, solver: StaggeredSolver) -> None:
         self.w_cells = solver.w_grid * solver.w_grid
         self.solver = solver
+        self.b = ti.ndarray(ti.f32, shape=self.w_cells)
 
     @ti.kernel
     def fill_linear_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
@@ -87,11 +88,10 @@ class PressureSolver:
             num_cols=self.w_cells,
             dtype=ti.f32,
         )
-        b = ti.ndarray(ti.f32, shape=self.w_cells)
-        self.fill_linear_system(A, b)
+        self.fill_linear_system(A, self.b)
 
         # Solve the linear system:
-        solver = SparseCG(A.build(), b, atol=1e-5, max_iter=500)
+        solver = SparseCG(A.build(), self.b, atol=1e-5, max_iter=50)
         p, _ = solver.solve()
 
         # Correct pressure:

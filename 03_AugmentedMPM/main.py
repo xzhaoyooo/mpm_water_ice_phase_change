@@ -19,6 +19,8 @@ def main():
     arguments = parser.parse_args()
     print(parser.epilog)
 
+    ti.init(arch=ti.gpu, verbose=False)
+    '''
     # Initialize Taichi on the chosen architecture:
     if arguments.arch.lower() == "cpu":
         ti.init(arch=ti.cpu, debug=arguments.debug)
@@ -26,6 +28,7 @@ def main():
         ti.init(arch=ti.gpu, debug=arguments.debug)
     else:
         ti.init(arch=ti.cuda, debug=arguments.debug)
+    '''
 
     initial_configuration = arguments.configuration % len(configurations)
     name = "Augmented MPM, Water and Ice with Phase Change"

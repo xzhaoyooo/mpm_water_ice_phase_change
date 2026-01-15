@@ -8,7 +8,7 @@ parser = ArgumentParser(prog="main.py", epilog=epilog, formatter_class=RawTextHe
 
 
 def add_configuration(configurations: list[Configuration]):
-    help = f"Available Configurations:\n{'\n'.join([f'[{i}] -> {c.name}' for i, c in enumerate(configurations)])}"
+    help = ''# f"Available Configurations:\n{'\n'.join([f'[{i}] -> {c.name}' for i, c in enumerate(configurations)])}"
     parser.add_argument(
         "-c",
         "--configuration",

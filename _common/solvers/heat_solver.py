@@ -8,6 +8,7 @@ class HeatSolver:
     def __init__(self, solver) -> None:
         self.w_cells = solver.w_grid * solver.w_grid
         self.solver = solver
+        self.b = ti.ndarray(ti.f32, shape=self.w_cells)
 
     @ti.kernel
     def fill_linear_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
@@ -54,7 +55,7 @@ class HeatSolver:
                 if self.solver.is_empty(i, j - 1):  # non-homogeneous Dirichlet
                     A[idx, idx - 1] -= dt_inv_mass_capacity * self.solver.conductivity_y[i, j]
                     b[idx] += inv_dx_sqrd * self.solver.conductivity_y[i, j] * self.solver.temperature_c[i, j - 1]
-
+            
             A[idx, idx] += diagonal  # add value from variable, to keep max_num_triplets as low as possible
 
     @ti.kernel
@@ -69,11 +70,10 @@ class HeatSolver:
             num_cols=self.w_cells,
             dtype=ti.f32,
         )
-        b = ti.ndarray(ti.f32, shape=self.w_cells)
-        self.fill_linear_system(A, b)
+        self.fill_linear_system(A, self.b)
 
         # Solve the linear system.
-        solver = SparseCG(A.build(), b, atol=1e-5, max_iter=500)
+        solver = SparseCG(A.build(), self.b, atol=1e-5, max_iter=50)
         T, _ = solver.solve()
 
         self.fill_temperature_field(T)
