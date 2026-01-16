@@ -75,5 +75,5 @@ class HeatSolver:
         # Solve the linear system.
         solver = SparseCG(A.build(), self.b, atol=1e-5, max_iter=50)
         T, _ = solver.solve()
-
+        
         self.fill_temperature_field(T)

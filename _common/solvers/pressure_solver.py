@@ -88,6 +88,7 @@ class PressureSolver:
             num_cols=self.w_cells,
             dtype=ti.f32,
         )
+        
         self.fill_linear_system(A, self.b)
 
         # Solve the linear system:

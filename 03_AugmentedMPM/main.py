@@ -19,7 +19,7 @@ def main():
     arguments = parser.parse_args()
     print(parser.epilog)
 
-    ti.init(arch=ti.gpu, verbose=False)
+    ti.init(arch=ti.cuda, verbose=False)
     '''
     # Initialize Taichi on the chosen architecture:
     if arguments.arch.lower() == "cpu":
