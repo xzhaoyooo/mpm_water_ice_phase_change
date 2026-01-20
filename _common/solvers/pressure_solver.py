@@ -13,7 +13,7 @@ class PressureSolver:
         self.A = LinearOperator(self.compute_Ax)
         self.x = ti.field(dtype=ti.f32, shape=self.w_cells)
         self.b = ti.field(dtype=ti.f32, shape=self.w_cells)
-        self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=1000, tol=1e-10, quiet=True)
+        self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=1000, tol=1e-10, quiet=False)
 
     @ti.kernel
     def fill_b(self):
@@ -139,35 +139,36 @@ class PressureSolver:
 
             # Build the left-hand side of the linear system:
             diagonal += self.solver.left_hand_offset(i, j)
-
+            l, r, b, t = 0.0, 0.0, 0.0, 0.0
+            l_idx, r_idx, b_idx, t_idx = idx - 1, idx + 1, idx + self.solver.w_grid, idx - self.solver.w_grid
             # We enforce homogeneous Neumann boundary conditions at FACES adjacent to cells that have been marked as colliding.
             if not self.solver.is_colliding(i + 1, j):  # homogeneous Neumann
                 inv_rho = self.solver.volume_x[i + 1, j] / self.solver.mass_x[i + 1, j]
                 diagonal += dt_inv_dx_sqrd * inv_rho
                 if not self.solver.is_empty(i + 1, j):  # homogeneous Dirichlet
-                    A[idx, idx + self.solver.w_grid] -= dt_inv_dx_sqrd * inv_rho
+                    b -= dt_inv_dx_sqrd * inv_rho
 
             if not self.solver.is_colliding(i - 1, j):  # homogeneous Neumann
                 inv_rho = self.solver.volume_x[i, j] / self.solver.mass_x[i, j]
                 diagonal += dt_inv_dx_sqrd * inv_rho
                 if not self.solver.is_empty(i - 1, j):  # homogeneous Dirichlet
-                    A[idx, idx - self.solver.w_grid] -= dt_inv_dx_sqrd * inv_rho
+                    t -= dt_inv_dx_sqrd * inv_rho
 
             if not self.solver.is_colliding(i, j + 1):  # homogeneous Neumann
                 inv_rho = self.solver.volume_y[i, j + 1] / self.solver.mass_y[i, j + 1]
                 diagonal += dt_inv_dx_sqrd * inv_rho
                 if not self.solver.is_empty(i, j + 1):  # homogeneous Dirichlet
-                    A[idx, idx + 1] -= dt_inv_dx_sqrd * inv_rho
+                    r -= dt_inv_dx_sqrd * inv_rho
 
             if not self.solver.is_colliding(i, j - 1):  # homogeneous Neumann
                 inv_rho = self.solver.volume_y[i, j] / self.solver.mass_y[i, j]
                 diagonal += dt_inv_dx_sqrd * inv_rho
                 if not self.solver.is_empty(i, j - 1):  # homogeneous Dirichlet
-                    A[idx, idx - 1] -= dt_inv_dx_sqrd * inv_rho
+                    l -= dt_inv_dx_sqrd * inv_rho
 
-            A[idx, idx] += diagonal
-            Ax[idx] += diagonal * x[idx]
+            Ax[idx] = diagonal * x[idx] + l * x[l_idx] + r * x[r_idx] + b * x[b_idx] + t * x[t_idx]
     
-    def matrix_free_cg_solver(self):
+    def matrix_free_cg_solve(self):
         self.fill_b()
-        pass
+        self.mat_free_cg_solver.solve()
+        self.apply_pressure(self.x)
