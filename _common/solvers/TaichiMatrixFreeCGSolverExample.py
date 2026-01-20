@@ -4,7 +4,7 @@ from taichi.linalg import MatrixFreeCG, LinearOperator
 
 ti.init(arch=ti.cpu)
 
-GRID = 4
+GRID = 2
 x = ti.field(dtype=ti.f32, shape=(GRID, GRID))
 b = ti.field(dtype=ti.f32, shape=(GRID, GRID))
 
@@ -13,11 +13,11 @@ def init():
     for i, j in ti.ndrange(GRID, GRID):
         xl = i / (GRID - 1)
         yl = j / (GRID - 1)
-        b[i, j] = ti.sin(2 * math.pi * xl) * ti.sin(2 * math.pi * yl)
+        b[i, j] = 1
         x[i, j] = 0.0
 
 @ti.kernel
-def compute_Ax(v: ti.template(), mv: ti.template()):
+def compute_Ax(v: ti.template(), mv: ti.template()): # pyright: ignore
     for i, j in v:
         l = v[i - 1, j] if i - 1 >= 0 else 0.0
         r = v[i + 1, j] if i + 1 <= GRID - 1 else 0.0

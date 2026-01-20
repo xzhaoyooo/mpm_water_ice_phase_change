@@ -13,7 +13,8 @@ class PressureSolver:
         self.A = LinearOperator(self.compute_Ax)
         self.x = ti.field(dtype=ti.f32, shape=self.w_cells)
         self.b = ti.field(dtype=ti.f32, shape=self.w_cells)
-        self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=1000, tol=1e-10, quiet=False)
+        self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=10, tol=1e-10, quiet=False)
+        self.iter_count = 0
 
     @ti.kernel
     def fill_b(self):
@@ -89,7 +90,7 @@ class PressureSolver:
             A[idx, idx] += diagonal
 
     @ti.kernel
-    def apply_pressure(self, pressure: ti.types.ndarray()):  # pyright: ignore
+    def apply_pressure(self, pressure: ti.template()):  # pyright: ignore
         coefficient = self.solver.dt[None] * self.solver.inv_dx
         for i, j in ti.ndrange(self.solver.w_grid, self.solver.w_grid):
             idx = i * self.solver.w_grid + j
@@ -169,6 +170,8 @@ class PressureSolver:
             Ax[idx] = diagonal * x[idx] + l * x[l_idx] + r * x[r_idx] + b * x[b_idx] + t * x[t_idx]
     
     def matrix_free_cg_solve(self):
+        self.iter_count += 1
+        print(f'Pressure Solve Iteration: {self.iter_count}')
         self.fill_b()
         self.mat_free_cg_solver.solve()
         self.apply_pressure(self.x)
