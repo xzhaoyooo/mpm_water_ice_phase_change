@@ -95,6 +95,15 @@ class CollocatedSolver(ABC):
             ((0.5 * ti.abs(distance - 2.0) ** 3) - ((distance - 2.0) ** 2) + 0.66),
             ((-0.166 * ti.abs(distance - 3.0) ** 3) + ((distance - 3.0) ** 2) - (2 * ti.abs(distance - 3.0)) + 1.33),
         ]
+    
+    @ti.func
+    def integral_cubic_kernel(self, r):  # pyright: ignore
+        if r < -2.0: return 0
+        elif r < -1.0: return 1/24 * r**4 + 1/3 * r**3 + r**2 + 4/3 * r + 2/3
+        elif r < 0.0: return -1/8 * r**4 - 1/3 * r**3 + 2/3 * r + 1/2
+        elif r < 1.0: return 1/8 * r**4 - 1/3 * r**3 + 2/3 * r + 1/2
+        elif r < 2.0: return -1/24 * r**4 + 1/3 * r**3 - r**2 + 4/3 * r + 1/3
+        else: return 1       
 
     @ti.func
     def compute_quadratic_kernel(self, distance: ti.template()) -> ti.template():  # pyright: ignore
@@ -107,6 +116,14 @@ class CollocatedSolver(ABC):
             - distance: vector, distance between base cell and particle position
         """
         return [0.5 * (1.5 - distance) ** 2, 0.75 - (distance - 1) ** 2, 0.5 * (distance - 0.5) ** 2]
+
+    @ti.func
+    def integral_quadratic_kernel(self, r):  # pyright: ignore
+        if r < -1.5: return 0
+        elif r < -0.5: return 1/6 * (3/2 + r)**3
+        elif r < 0.5: return -1/3 * r**3 + 3/4 * r + 1/2
+        elif r < 1.5: return -1/6 * (3/2 - r)**3 + 1
+        else: return 1
 
     def reset(self, configuration: Configuration):
         self.boundary_temperature[None] = configuration.boundary_temperature

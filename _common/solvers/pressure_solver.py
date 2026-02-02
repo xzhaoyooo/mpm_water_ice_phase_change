@@ -1,6 +1,7 @@
 from _common.solvers.staggered_solver import StaggeredSolver
 from taichi.linalg import SparseMatrixBuilder, SparseCG, LinearOperator
 from _common.solvers.matrix_free_cg_solver import MatrixFreeCGSolver
+from _common.solvers.matrix_properties_validator import MatrixPropertiesValidator
 
 import taichi as ti
 
@@ -15,6 +16,9 @@ class PressureSolver:
         self.b = ti.field(dtype=ti.f32, shape=self.w_cells)
         self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=10, tol=1e-10, quiet=False)
         self.iter_count = 0
+
+        self.A_full = ti.field(dtype=ti.f32, shape=(self.w_cells, self.w_cells))
+        self.mat_props_validator = MatrixPropertiesValidator(self.A_full, self.b)
 
     @ti.kernel
     def fill_b(self):
@@ -41,6 +45,7 @@ class PressureSolver:
     
     @ti.kernel
     def fill_linear_system(self, A: ti.template(), b: ti.template()):  # pyright: ignore
+        A.fill(0)
         dt_inv_dx_sqrd = self.solver.dt[None] * self.solver.inv_dx * self.solver.inv_dx
         for i, j in ti.ndrange(self.solver.w_grid, self.solver.w_grid):
             diagonal = 0.0  # to keep max_num_triplets as low as possible
@@ -171,6 +176,13 @@ class PressureSolver:
     
     def matrix_free_cg_solve(self):
         self.iter_count += 1
+        if self.iter_count == 2:
+            self.fill_linear_system(self.A_full, self.b)
+            self.mat_props_validator.make_snapshot()
+            print(f"Norm of b (pressure): {self.mat_props_validator.get_b_norm():.6e}")
+            print(f"Pressure mat SPD: {self.mat_props_validator.is_matrix_positive_semidefinite()}")
+            self.mat_props_validator.dump_matrix("pressure_matrix.npy")
+
         print(f'Pressure Solve Iteration: {self.iter_count}')
         self.fill_b()
         self.mat_free_cg_solver.solve()

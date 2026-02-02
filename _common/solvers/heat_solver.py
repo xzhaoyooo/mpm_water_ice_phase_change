@@ -1,5 +1,6 @@
 from taichi.linalg import SparseMatrixBuilder, SparseCG, LinearOperator
 from _common.solvers.matrix_free_cg_solver import MatrixFreeCGSolver
+from _common.solvers.matrix_properties_validator import MatrixPropertiesValidator
 
 import taichi as ti
 
@@ -15,8 +16,13 @@ class HeatSolver:
         self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=10, tol=1e-10, quiet=False)
         self.iter_count = 0
 
+        self.A_full = ti.field(dtype=ti.f32, shape=(self.w_cells, self.w_cells))
+        self.mat_props_validator = MatrixPropertiesValidator(self.A_full, self.b)
+
+
     @ti.kernel
-    def fill_linear_system(self, A: ti.types.sparse_matrix_builder(), b: ti.types.ndarray()):  # pyright: ignore
+    def fill_linear_system(self, A: ti.template(), b: ti.template()):  # pyright: ignore
+        A.fill(0)
         for i, j in ti.ndrange(self.solver.w_grid, self.solver.w_grid):
             idx = (i * self.solver.w_grid) + j  # raveled index
             b[idx] = self.solver.temperature_c[i, j]  # right-hand side
@@ -151,6 +157,13 @@ class HeatSolver:
 
     def matrix_free_cg_solve(self):
         self.iter_count += 1
+        if self.iter_count == 2:
+            self.fill_linear_system(self.A_full, self.b)
+            self.mat_props_validator.make_snapshot()
+            print(f"Norm of b (heat): {self.mat_props_validator.get_b_norm():.6e}")
+            print(f"Heat mat SPD: {self.mat_props_validator.is_matrix_positive_semidefinite()}")
+            self.mat_props_validator.dump_matrix("heat_matrix.npy")
+
         print(f'Heat Solve Iteration: {self.iter_count}')
         self.fill_b()
         self.mat_free_cg_solver.solve()

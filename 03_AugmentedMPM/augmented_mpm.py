@@ -260,17 +260,39 @@ class AugmentedMPM(StaggeredSolver):
             # If the free surface is being enforced as a Dirichlet temperature condition,
             # the ambient air temperature is recorded for empty cells.
             self.temperature_c[i, j] = self.ambient_temperature[None]
+    
+    @ti.func
+    def compute_axis_integral_cubic(self, cell_center_pos, face_center_pos):
+        cell_endpoints = ti.Vector([cell_center_pos - 0.5 * self.dx, cell_center_pos + 0.5 * self.dx])
+        dists = (cell_endpoints - face_center_pos) / self.dx
+        return self.integral_cubic_kernel(dists[1]) - self.integral_cubic_kernel(dists[0])
+
+    @ti.func
+    def compute_axis_integral_quadratic(self, cell_center_pos, face_center_pos):
+        cell_endpoints = ti.Vector([cell_center_pos - 0.5 * self.dx, cell_center_pos + 0.5 * self.dx])
+        dists = (cell_endpoints - face_center_pos) / self.dx
+        return self.integral_quadratic_kernel(dists[1]) - self.integral_quadratic_kernel(dists[0])
+    
+    @ti.func
+    def compute_control_volume_cubic(self, cell_center_pos, face_center_pos):
+        int_result = self.compute_axis_integral_cubic(cell_center_pos[0], face_center_pos[0]) * \
+                     self.compute_axis_integral_cubic(cell_center_pos[1], face_center_pos[1])
+        return int_result * self.dx * self.dx
 
     @ti.kernel
     def compute_volumes(self):
-        # FIXME: this seems to be wrong, the paper has a sum over CDFs
-        control_volume = 0.5 * self.dx * self.dx
+        # TODO: Please check if this works (this can be optimized into a LUT if needed).
         for i, j in self.classification_c:
             if self.classification_c[i, j] == Classification.Interior:
-                self.volume_x[i + 1, j] += control_volume
-                self.volume_y[i, j + 1] += control_volume
-                self.volume_x[i, j] += control_volume
-                self.volume_y[i, j] += control_volume
+                cell_center_pos = self.dx * (ti.Vector([i, j]) + 0.5)
+                # Left face
+                self.volume_x[i, j]   += self.compute_control_volume_cubic(cell_center_pos, cell_center_pos + ti.Vector([-0.5, 0.0]) * self.dx)
+                # Top face
+                self.volume_y[i+1, j] += self.compute_control_volume_cubic(cell_center_pos, cell_center_pos + ti.Vector([0.0,  0.5]) * self.dx)
+                # Right face
+                self.volume_x[i, j+1] += self.compute_control_volume_cubic(cell_center_pos, cell_center_pos + ti.Vector([0.5,  0.0]) * self.dx)
+                # Bottom face
+                self.volume_y[i, j]   += self.compute_control_volume_cubic(cell_center_pos, cell_center_pos + ti.Vector([0.0, -0.5]) * self.dx)
 
     @ti.kernel
     def grid_to_particle(self):

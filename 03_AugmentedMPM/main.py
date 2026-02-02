@@ -34,7 +34,7 @@ def main():
     name = "Augmented MPM, Water and Ice with Phase Change"
     prefix = "A_MPM"
 
-    max_particles, n_grid = 300_000, 128
+    max_particles, n_grid = 300_000, 32
     radius = 1 / (6 * float(n_grid))  # 6 particles per cell
     vol_0 = math.pi * (radius**2)
 
