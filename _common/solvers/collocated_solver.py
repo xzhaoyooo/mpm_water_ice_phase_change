@@ -98,12 +98,14 @@ class CollocatedSolver(ABC):
     
     @ti.func
     def integral_cubic_kernel(self, r):  # pyright: ignore
-        if r < -2.0: return 0
-        elif r < -1.0: return 1/24 * r**4 + 1/3 * r**3 + r**2 + 4/3 * r + 2/3
-        elif r < 0.0: return -1/8 * r**4 - 1/3 * r**3 + 2/3 * r + 1/2
-        elif r < 1.0: return 1/8 * r**4 - 1/3 * r**3 + 2/3 * r + 1/2
-        elif r < 2.0: return -1/24 * r**4 + 1/3 * r**3 - r**2 + 4/3 * r + 1/3
-        else: return 1       
+        intgral = 0.
+        if r < -2.0: intgral = 0
+        elif r < -1.0: intgral = 1/24 * r**4 + 1/3 * r**3 + r**2 + 4/3 * r + 2/3
+        elif r < 0.0: intgral = -1/8 * r**4 - 1/3 * r**3 + 2/3 * r + 1/2
+        elif r < 1.0: intgral = 1/8 * r**4 - 1/3 * r**3 + 2/3 * r + 1/2
+        elif r < 2.0: intgral = -1/24 * r**4 + 1/3 * r**3 - r**2 + 4/3 * r + 1/3
+        else: intgral = 1.
+        return intgral
 
     @ti.func
     def compute_quadratic_kernel(self, distance: ti.template()) -> ti.template():  # pyright: ignore
@@ -119,12 +121,14 @@ class CollocatedSolver(ABC):
 
     @ti.func
     def integral_quadratic_kernel(self, r):  # pyright: ignore
-        if r < -1.5: return 0
-        elif r < -0.5: return 1/6 * (3/2 + r)**3
-        elif r < 0.5: return -1/3 * r**3 + 3/4 * r + 1/2
-        elif r < 1.5: return -1/6 * (3/2 - r)**3 + 1
-        else: return 1
-
+        integral = 0.
+        if r < -1.5: integral = 0.
+        elif r < -0.5: integral = 1/6 * (3/2 + r)**3
+        elif r < 0.5: integral = -1/3 * r**3 + 3/4 * r + 1/2
+        elif r < 1.5: integral = -1/6 * (3/2 - r)**3 + 1
+        else: integral = 1.
+        return integral
+    
     def reset(self, configuration: Configuration):
         self.boundary_temperature[None] = configuration.boundary_temperature
         self.ambient_temperature[None] = configuration.ambient_temperature

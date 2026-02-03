@@ -13,7 +13,7 @@ class HeatSolver:
         self.A = LinearOperator(self.compute_Ax)
         self.x = ti.field(dtype=ti.f32, shape=self.w_cells)
         self.b = ti.field(dtype=ti.f32, shape=self.w_cells)
-        self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=10, tol=1e-10, quiet=False)
+        self.mat_free_cg_solver = MatrixFreeCGSolver(self.A, self.b, self.x, maxiter=100, tol=1e-5, quiet=False)
         self.iter_count = 0
 
         self.A_full = ti.field(dtype=ti.f32, shape=(self.w_cells, self.w_cells))
